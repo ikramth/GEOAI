@@ -1,0 +1,2138 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>GeoAI — L'IA au service de l'Information Géospatiale</title>
+<meta name="description" content="Présentation scientifique interactive — Projet CC de Master 1 Smart Cities Engineering (Métiers de la Ville) : GeoAI, SIG et vision par ordinateur. Département d'Architecture, Faculté de Technologie, Université Yahia Farès de Médéa. Encadrante : Dr. Amel KELLOU." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230B2545'/><circle cx='50' cy='50' r='26' fill='none' stroke='%2366D9FF' stroke-width='7'/><path d='M24 50h52M50 24v52' stroke='%2366D9FF' stroke-width='5'/></svg>" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: '#0B2545', navy2: '#134074', cy: '#006699', azure: '#1D4ED8',
+          char: '#1E293B', ivory: '#FAF8F5', parch: '#F5F2EB', sand: '#EFECE6'
+        },
+        fontFamily: {
+          display: ['Sora', 'system-ui', 'sans-serif'],
+          sans: ['Inter', 'system-ui', 'sans-serif'],
+          mono2: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+          ar: ['Amiri', 'serif']
+        }
+      }
+    }
+  }
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script type="importmap">
+  { "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  } }
+</script>
+
+<style>
+  :root{
+    --ivory:#FAF8F5; --parch:#F5F2EB;
+    --navy:#0B2545; --navy2:#134074; --cy:#006699; --azure:#1D4ED8; --char:#1E293B;
+    --line:rgba(19,64,116,.12);
+    --ease:cubic-bezier(.22,1,.36,1);
+  }
+  *{ -webkit-tap-highlight-color:transparent; }
+  html,body{ height:100%; margin:0; overflow-x:hidden; overflow-y:hidden; }
+  body{
+    font-family:'Inter',system-ui,sans-serif; color:var(--char);
+    background:linear-gradient(155deg,#FAF8F5 0%,#F5F2EB 55%,#EFECE6 100%);
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{ background:rgba(0,102,153,.22); }
+  kbd{ font-family:'IBM Plex Mono',monospace; font-size:10px; border:1px solid var(--line);
+    border-bottom-width:2px; border-radius:6px; padding:2px 6px; background:#fff; color:var(--navy2); }
+
+  /* ===================== BACKGROUND STACK (no grids, no squares) ===================== */
+  #bg{ position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
+  .bg-base{ position:absolute; inset:0;
+    background:
+      radial-gradient(1000px 720px at 86% 14%, rgba(0,102,153,.09), transparent 62%),
+      radial-gradient(820px 620px at 4% 94%, rgba(19,64,116,.08), transparent 60%),
+      linear-gradient(155deg,#FAF8F5 0%,#F5F2EB 55%,#EFECE6 100%);
+  }
+  /* faint artistic flat world map (local asset) — left / centre biased */
+  .bg-map{ position:absolute; inset:0;
+    background-image:url('ai-generated-great-detailed-illustration-of-the-world-map-in-vintage-style-ai-generated-free-photo.jpg');
+    background-size:cover; background-position:34% center;
+    opacity:.075; mix-blend-mode:multiply;
+    filter:saturate(.3) sepia(.35) contrast(.88);
+    mask-image:radial-gradient(120% 100% at 30% 50%, #000 25%, rgba(0,0,0,.35) 70%, transparent 100%);
+    -webkit-mask-image:radial-gradient(120% 100% at 30% 50%, #000 25%, rgba(0,0,0,.35) 70%, transparent 100%);
+  }
+  /* abstract topographical contours */
+  .bg-topo{ position:absolute; inset:0; width:100%; height:100%; opacity:.85; }
+  .bg-topo path{ fill:none; stroke:rgba(19,64,116,.14); stroke-width:1.1; vector-effect:non-scaling-stroke; }
+  .topo-a{ animation:drift 46s ease-in-out infinite alternate; }
+  .topo-b{ animation:drift2 54s ease-in-out infinite alternate; }
+  @keyframes drift{ from{ transform:translate(0,0) } to{ transform:translate(-44px,-20px) } }
+  @keyframes drift2{ from{ transform:translate(0,0) } to{ transform:translate(36px,18px) } }
+  .bg-glow{ position:absolute; inset:0;
+    background:radial-gradient(520px circle at var(--mx,50%) var(--my,30%), rgba(0,102,153,.10), transparent 70%);
+    transition:background .18s linear, opacity .55s var(--ease);
+  }
+  /* neural network mesh canvas (left & centre) */
+  #neural{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+  /* single 3D earth — COVER SLIDE ONLY */
+  #globe{ position:fixed; inset:0; width:100%; height:100%; z-index:2; pointer-events:none;
+    transition:opacity .6s var(--ease), visibility 0s linear .6s; }
+  @media (max-width:1199px){ #globe{ opacity:.72; } }
+  @media (max-width:768px){ #globe{ opacity:.45; } }
+  body:not(.on-cover) #globe{ opacity:0 !important; visibility:hidden !important; }
+  #neural{ transition:opacity .7s var(--ease); }
+  body:not(.on-cover) #neural{ opacity:.5; }
+  .bg-map{ transition:opacity .8s var(--ease); }
+  body:not(.on-cover) .bg-map{ opacity:0; }
+  /* slides 2-11: pure ivory + topo + faint neural mesh, soft frosted cards */
+  body:not(.on-cover) .bg-base{
+    background:linear-gradient(160deg,#FAF8F5 0%,#F8F5EF 58%,#F5F2EB 100%);
+  }
+  body:not(.on-cover) .bg-glow{ opacity:0; }
+  body:not(.on-cover) .glass,
+  body:not(.on-cover) .glass-soft,
+  body:not(.on-cover) .cool-panel,
+  body:not(.on-cover) .wf-step{
+    backdrop-filter:blur(6px) saturate(1.12);
+    -webkit-backdrop-filter:blur(6px) saturate(1.12);
+  }
+  body:not(.on-cover) .glass{ background:rgba(255,255,255,.86); }
+
+  /* ===================== GLASS / MICRO-UI ===================== */
+  .glass{
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(16px) saturate(1.25);
+    -webkit-backdrop-filter:blur(16px) saturate(1.25);
+    border:1px solid var(--line);
+    box-shadow:0 20px 48px -26px rgba(11,37,69,.4), inset 0 1px 0 rgba(255,255,255,.75);
+  }
+  .glass-soft{ background:rgba(255,255,255,.7); border:1px solid var(--line);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+  .card{ transition:transform .4s var(--ease), box-shadow .4s var(--ease), border-color .4s var(--ease); }
+  .card:hover{ transform:translateY(-4px); box-shadow:0 30px 60px -32px rgba(11,37,69,.48);
+    border-color:rgba(0,102,153,.3); }
+  .eyebrow{ display:inline-flex; align-items:center; gap:.5rem; font-family:'IBM Plex Mono',monospace;
+    font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--cy);
+    border:1px solid rgba(19,64,116,.16); background:rgba(255,255,255,.7);
+    padding:.38rem .85rem; border-radius:999px; }
+  .eyebrow svg{ width:13px; height:13px; }
+  .badge{ display:inline-flex; align-items:center; gap:.45rem; font-family:'IBM Plex Mono',monospace;
+    font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:var(--navy2);
+    background:rgba(255,255,255,.75); border:1px solid var(--line); padding:.46rem .8rem; border-radius:999px; }
+  .badge svg{ width:13px; height:13px; color:var(--cy); }
+  .chip{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.05em;
+    padding:.3rem .62rem; border-radius:8px; background:rgba(19,64,116,.06);
+    border:1px solid rgba(19,64,116,.12); color:var(--navy2); white-space:nowrap; }
+  .grad{ background:linear-gradient(103deg,#0B2545 4%,#134074 44%,#006699 90%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .rule{ height:1px; background:linear-gradient(90deg, rgba(19,64,116,.26), transparent); }
+
+  /* ===================== DECK & FOLD TRANSITIONS ===================== */
+  #deck{ position:relative; z-index:3; height:100vh; height:100dvh;
+    perspective:1900px; perspective-origin:50% 45%; }
+  .slide{
+    position:absolute; inset:0; opacity:0; visibility:hidden; pointer-events:none; z-index:1;
+    transform:translate3d(0,6%,0) rotateX(8deg) scale(.975); transform-origin:50% 0%;
+    transition:opacity .5s var(--ease), transform .85s var(--ease), visibility 0s linear .85s;
+    will-change:transform,opacity;
+  }
+  .slide.exit-fwd{ opacity:0; visibility:visible; transform:translate3d(0,-6%,0) rotateX(-8deg) scale(.975); }
+  .slide.exit-back{ opacity:0; visibility:visible; transform:translate3d(0,6%,0) rotateX(8deg) scale(.975); }
+  .slide.active{ opacity:1; visibility:visible; pointer-events:auto; z-index:2; transform:none;
+    transition:opacity .55s var(--ease) .08s, transform .9s var(--ease) .05s, visibility 0s; }
+  /* STRICT 100vh — never scrolls; content is auto-scaled to fit (.fit) */
+  .slide-inner{
+    height:100%; max-width:1340px; margin:0 auto; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:clamp(4.3rem,8vh,5.6rem) clamp(1.1rem,3.4vw,2.8rem) clamp(4.6rem,9.5vh,6rem);
+  }
+  .fit{ width:100%; transform-origin:center center; }
+  .rv{ opacity:0; transform:translateY(20px);
+    transition:opacity .7s var(--ease) var(--d,0s), transform .7s var(--ease) var(--d,0s); }
+  .slide.active .rv{ opacity:1; transform:none; }
+  .h2{ font-family:'Sora',sans-serif; font-weight:700; color:var(--navy);
+    font-size:clamp(1.45rem,2.7vw,2.35rem); line-height:1.1; letter-spacing:-.02em; }
+  .lead{ font-size:clamp(.88rem,1vw,1rem); line-height:1.6; color:#475569; max-width:74ch; }
+  .ttl{ font-family:'Sora',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(.98rem,1.3vw,1.12rem);
+    line-height:1.25; letter-spacing:-.01em; }
+  .bd{ font-size:clamp(11.6px,.85vw,13px); line-height:1.55; color:#475569; }
+  .lbl{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.16em;
+    text-transform:uppercase; color:var(--cy); }
+  .ico-sq{ display:grid; place-items:center; width:38px; height:38px; border-radius:11px;
+    background:rgba(0,102,153,.09); color:var(--cy); }
+  .ico-sq svg{ width:18px; height:18px; }
+
+  .bar{ height:6px; border-radius:99px; background:rgba(19,64,116,.09); overflow:hidden; }
+  .bar > i{ display:block; height:100%; width:0; border-radius:99px; transition:width 1.2s var(--ease) .3s; }
+  .slide.active .bar > i{ width:var(--w,0%); }
+
+  /* ===================== CHROME ===================== */
+  #topbar{ position:fixed; top:0; inset-inline:0; z-index:30; }
+  .progress-track{ height:3px; background:rgba(19,64,116,.08); }
+  #progress{ height:100%; width:0%;
+    background:linear-gradient(90deg,#0B2545,#134074 55%,#006699);
+    transition:width .8s var(--ease); box-shadow:0 0 12px rgba(0,102,153,.45); }
+  .monogram{ width:36px; height:36px; border-radius:11px; display:grid; place-items:center;
+    background:linear-gradient(140deg,#0B2545,#134074); color:#8FE3FF;
+    box-shadow:0 8px 22px -10px rgba(11,37,69,.75); }
+  .monogram svg{ width:18px; height:18px; }
+  #counter{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; letter-spacing:.1em;
+    color:var(--navy); cursor:pointer; transition:transform .3s var(--ease), border-color .3s; }
+  #counter:hover{ transform:translateY(-2px); border-color:rgba(0,102,153,.4); }
+  #bottomnav{ position:fixed; bottom:0; inset-inline:0; z-index:30; }
+  .dot{ position:relative; width:9px; height:9px; border-radius:99px; background:rgba(19,64,116,.24);
+    transition:all .45s var(--ease); cursor:pointer; border:0; padding:0; }
+  .dot:hover{ background:rgba(0,102,153,.55); transform:scale(1.45); }
+  .dot.on{ width:30px; background:linear-gradient(90deg,#0B2545,#006699); transform:none;
+    box-shadow:0 0 14px rgba(0,102,153,.5); }
+  .navbtn{ width:42px; height:42px; border-radius:999px; display:grid; place-items:center;
+    background:rgba(255,255,255,.78); border:1px solid var(--line); color:var(--navy);
+    cursor:pointer; transition:all .35s var(--ease); }
+  .navbtn:hover:not(:disabled){ background:#0B2545; color:#8FE3FF; transform:translateY(-3px);
+    box-shadow:0 16px 30px -16px rgba(11,37,69,.8); }
+  .navbtn:disabled{ opacity:.3; cursor:not-allowed; }
+  .navbtn svg{ width:17px; height:17px; }
+  .cta{ display:inline-flex; align-items:center; gap:.55rem; font-family:'Sora',sans-serif; font-weight:600;
+    font-size:13px; padding:.85rem 1.4rem; border-radius:999px; cursor:pointer; transition:all .4s var(--ease); }
+  .cta-primary{ background:linear-gradient(120deg,#0B2545,#134074 60%,#006699); color:#FBF9F5;
+    box-shadow:0 20px 40px -20px rgba(11,37,69,.85); border:1px solid rgba(255,255,255,.14); }
+  .cta-primary:hover{ transform:translateY(-3px); box-shadow:0 28px 50px -22px rgba(11,37,69,.9); }
+  .cta-ghost{ background:rgba(255,255,255,.75); color:var(--navy); border:1px solid var(--line); }
+  .cta-ghost:hover{ transform:translateY(-3px); border-color:rgba(0,102,153,.4); }
+  .cta svg{ width:15px; height:15px; }
+  .hero-title{ font-family:'Sora',sans-serif; font-weight:800; color:var(--navy);
+    font-size:clamp(1.75rem,3.7vw,3.35rem); line-height:1.07; letter-spacing:-.028em; }
+  .fade-in-img{ animation:imgIn 1s var(--ease) both; }
+  @keyframes imgIn{ from{ opacity:0; transform:scale(1.04) } to{ opacity:1; transform:none } }
+  .img-fb{ background:linear-gradient(135deg,#0B2545,#134074 55%,#006699); }
+  .frame{ overflow:hidden; border-radius:14px; border:1px solid var(--line); position:relative; }
+  .frame img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .cap{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.04em; color:#64748b; line-height:1.45; }
+
+  .flow-line{ stroke-dasharray:6 7; animation:flow 1.4s linear infinite; }
+  @keyframes flow{ to{ stroke-dashoffset:-26; } }
+  .blink{ animation:blink 2.4s ease-in-out infinite; }
+  @keyframes blink{ 0%,100%{ opacity:1 } 50%{ opacity:.35 } }
+
+  .dark-panel{ border:1px solid rgba(0,102,153,.3);
+    background:linear-gradient(155deg, rgba(11,37,69,.97), rgba(19,64,116,.95) 58%, rgba(0,102,153,.92));
+    box-shadow:0 28px 60px -32px rgba(11,37,69,.8); border-radius:18px; }
+  .cool-panel{ border:1px solid rgba(0,102,153,.3); border-radius:18px;
+    background:linear-gradient(158deg, rgba(255,255,255,.86), rgba(238,246,251,.78));
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px); }
+  .arrow-r{ color:var(--cy); display:grid; place-items:center; flex:none; }
+  .arrow-r svg{ width:16px; height:16px; }
+
+  #indexOverlay{ position:fixed; inset:0; z-index:60; display:grid; place-items:center;
+    background:rgba(11,37,69,.42); backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
+    opacity:0; pointer-events:none; transition:opacity .45s var(--ease); }
+  #indexOverlay.show{ opacity:1; pointer-events:auto; }
+  .idx-item{ display:flex; gap:.7rem; align-items:center; text-align:left; width:100%;
+    padding:.55rem .75rem; border-radius:12px; border:1px solid transparent; cursor:pointer;
+    transition:all .3s var(--ease); background:transparent; }
+  .idx-item:hover{ background:rgba(255,255,255,.92); border-color:var(--line); transform:translateX(5px); }
+  .idx-item .n{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--cy); width:22px; }
+
+  @media (max-width:640px){ .bg-map{ opacity:.05; } }
+  /* ---------- segmented control (slide 3) ---------- */
+  .seg{ cursor:pointer; transition:all .3s var(--ease); }
+  .seg:hover{ border-color:rgba(0,102,153,.4); transform:translateY(-2px); }
+  .seg.on{ background:linear-gradient(120deg,#0B2545,#134074); color:#FBF9F5;
+    border-color:transparent; box-shadow:0 10px 22px -14px rgba(11,37,69,.9); }
+  [data-pane]{ transition:opacity .45s var(--ease), transform .45s var(--ease), filter .45s var(--ease), box-shadow .45s var(--ease); }
+  [data-pane].dim{ opacity:.4; filter:saturate(.45); transform:scale(.972); }
+  [data-pane].lift{ transform:translateY(-5px); box-shadow:0 34px 64px -34px rgba(11,37,69,.55); }
+  .vs{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:46px; height:46px; border-radius:999px; display:grid; place-items:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.1em; color:var(--navy);
+    background:#fff; border:1px solid var(--line); box-shadow:0 12px 26px -14px rgba(11,37,69,.6);
+    z-index:5; pointer-events:none; }
+  @media (max-width:767px){ .vs{ display:none } }
+
+  /* ---------- feature-map tiles (slide 5, diagram content) ---------- */
+  .fm{ display:inline-block; width:15px; height:15px; border-radius:5px;
+    background:rgba(0,102,153,var(--o,.5)); box-shadow:inset 0 0 0 1px rgba(255,255,255,.4); }
+
+  /* ---------- workflow (slide 8) ---------- */
+  .wf-step{ text-align:left; border-radius:16px; padding:.85rem 1rem; cursor:pointer;
+    transition:all .35s var(--ease); background:rgba(255,255,255,.84); border:1px solid var(--line);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+  .wf-step:hover{ transform:translateY(-3px); border-color:rgba(0,102,153,.35); }
+  .wf-step.on{ background:linear-gradient(135deg,#0B2545,#134074 70%,#006699);
+    border-color:transparent; box-shadow:0 22px 40px -22px rgba(11,37,69,.85); transform:translateY(-4px); }
+  .wf-step.on .wf-n{ background:rgba(255,255,255,.16); color:#8FE3FF; border-color:rgba(255,255,255,.3); }
+  .wf-step.on .wf-t{ color:#fff !important; }
+  .wf-step.on .wf-d{ color:rgba(255,255,255,.72) !important; }
+  .wf-n{ width:27px; height:27px; border-radius:9px; display:grid; place-items:center;
+    font-family:'IBM Plex Mono',monospace; font-size:11px; border:1px solid var(--line);
+    color:var(--cy); background:#fff; transition:all .3s var(--ease); }
+
+  /* ---------- change detection (slide 7) ---------- */
+  .cd-stage{ position:relative; overflow:hidden; border-radius:14px; aspect-ratio:16/9;
+    min-height:170px; max-height:240px; }
+  .cd-stage img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .cd-a{ filter:grayscale(.85) contrast(.95) brightness(.97); }
+  .cd-b{ position:absolute; inset:0; clip-path:inset(0 0 0 50%); }
+  .cd-b img{ filter:saturate(1.2) contrast(1.05); }
+  .cd-b svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .cd-handle{ position:absolute; top:0; bottom:0; left:50%; width:2px; pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,255,255,.2),#fff,rgba(255,255,255,.2));
+    box-shadow:0 0 14px rgba(0,102,153,.75); }
+  .cd-handle::after{ content:''; position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%); width:28px; height:28px; border-radius:999px;
+    background:rgba(11,37,69,.9); border:2px solid #fff; box-shadow:0 0 16px rgba(0,102,153,.6); }
+  .cd-tag{ position:absolute; bottom:8px; font-family:'IBM Plex Mono',monospace; font-size:9px;
+    letter-spacing:.1em; text-transform:uppercase; padding:.25rem .55rem; border-radius:7px;
+    background:rgba(11,37,69,.78); color:#dff3ff; backdrop-filter:blur(4px); pointer-events:none; }
+  .cd-tag-l{ left:8px } .cd-tag-r{ right:8px; background:rgba(0,102,153,.85); color:#fff; }
+  .cd-range{ width:100%; accent-color:#006699; cursor:ew-resize; height:20px; }
+
+  /* ---------- fiche (slide 11) ---------- */
+  .fiche-row{ border-left:2px solid rgba(0,102,153,.3); padding-left:.85rem; }
+
+  /* ---------- slide 3 : animated video pipeline ---------- */
+  .pipe-card{ border-radius:20px; overflow:hidden; background:rgba(255,255,255,.88); }
+  .pipe-top{ display:flex; align-items:center; justify-content:space-between; gap:1rem;
+    padding:.55rem .85rem; border-bottom:1px solid var(--line); background:rgba(255,255,255,.55); }
+  .pipe-live{ display:inline-flex; align-items:center; gap:.4rem; font-family:'IBM Plex Mono',monospace;
+    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:#b91c1c;
+    background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.24);
+    padding:.26rem .58rem; border-radius:999px; white-space:nowrap; }
+  .pipe-live i{ width:6px; height:6px; border-radius:99px; background:#ef4444; animation:livePulse 1.8s infinite; }
+  @keyframes livePulse{ 0%{ box-shadow:0 0 0 0 rgba(239,68,68,.45) } 70%{ box-shadow:0 0 0 7px rgba(239,68,68,0) } 100%{ box-shadow:0 0 0 0 rgba(239,68,68,0) } }
+  .pipe-kicker{ font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--cy); line-height:1.3; }
+  .pipe-phase-title{ font-family:'Sora',sans-serif; font-weight:600; font-size:13px;
+    color:var(--navy); line-height:1.2; }
+  .pipe-play{ display:inline-flex; align-items:center; gap:.42rem; font-family:'IBM Plex Mono',monospace;
+    font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--navy);
+    background:#fff; border:1px solid var(--line); border-radius:999px; padding:.46rem .8rem;
+    cursor:pointer; transition:all .3s var(--ease); flex:none; }
+  .pipe-play:hover{ border-color:rgba(0,102,153,.45); transform:translateY(-2px); }
+  .pipe-play svg{ width:13px; height:13px; display:block; }
+  .pipe-stage{ position:relative; background:#0B2545; aspect-ratio:1200/470; max-height:46vh;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pipe-stage svg{ width:100%; height:100%; display:block; }
+  .pipe-stage text{ font-family:'IBM Plex Mono',monospace; }
+  .pipe-timeline{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--line); }
+  .pipe-step{ text-align:left; padding:.5rem .7rem .6rem; background:transparent; border:0;
+    border-right:1px solid var(--line); cursor:pointer; transition:background .3s var(--ease); }
+  .pipe-step:last-child{ border-right:0; }
+  .pipe-step:hover{ background:rgba(0,102,153,.06); }
+  .pipe-step.on{ background:linear-gradient(180deg,rgba(11,37,69,.055),rgba(0,102,153,.04)); }
+  .ps-top{ display:flex; align-items:center; gap:.42rem; }
+  .ps-n{ font-family:'IBM Plex Mono',monospace; font-size:8.5px; color:#94a3b8; letter-spacing:.08em; }
+  .pipe-step.on .ps-n{ color:var(--cy); }
+  .ps-t{ font-family:'Sora',sans-serif; font-weight:600; font-size:11px; color:var(--navy); line-height:1.2; }
+  .ps-s{ display:block; font-size:9px; color:#64748b; margin-top:1px; }
+  .ps-bar{ display:block; height:3px; border-radius:99px; background:rgba(19,64,116,.1);
+    margin-top:6px; overflow:hidden; }
+  .ps-bar i{ display:block; height:100%; width:0%; border-radius:99px;
+    background:linear-gradient(90deg,#0B2545,#006699 60%,#38bdf8); }
+  @media (max-width:767px){
+    .pipe-timeline{ grid-template-columns:repeat(2,1fr); }
+    .pipe-step{ border-bottom:1px solid var(--line); }
+    .pipe-top{ flex-wrap:wrap; }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important;
+       transition-duration:.14s !important; }
+  }
+</style>
+</head>
+<body class="font-sans on-cover">
+
+<!-- ================= BACKGROUND ================= -->
+<div id="bg" aria-hidden="true">
+  <div class="bg-base"></div>
+  <div class="bg-map"></div>
+  <svg class="bg-topo" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <path id="cA" fill="none" stroke="rgba(19,64,116,0.14)" stroke-width="1.1" vector-effect="non-scaling-stroke"
+            d="M-80,742 C120,690 268,764 424,712 C596,654 690,742 862,700 C1046,654 1184,724 1520,660" />
+      <path id="cB" fill="none" stroke="rgba(0,102,153,0.14)" stroke-width="1.1" vector-effect="non-scaling-stroke"
+            d="M-60,140 C110,96 236,188 402,140 C568,92 664,196 836,150 C1008,104 1148,206 1500,132" />
+      <path id="cC" fill="none" stroke="rgba(29,78,216,0.10)" stroke-width="1.1" vector-effect="non-scaling-stroke"
+            d="M560,980 C700,872 828,930 958,846 C1094,758 1224,806 1500,714" />
+    </defs>
+    <g class="topo-a">
+      <use href="#cA" y="0"/><use href="#cA" y="-30"/><use href="#cA" y="-60"/><use href="#cA" y="-90"/>
+      <use href="#cA" y="-120"/><use href="#cA" y="-150"/><use href="#cA" y="-180"/><use href="#cA" y="30"/>
+    </g>
+    <g class="topo-b">
+      <use href="#cB" y="0"/><use href="#cB" y="34"/><use href="#cB" y="68"/><use href="#cB" y="102"/>
+      <use href="#cB" y="136"/><use href="#cB" y="170"/>
+      <use href="#cC" y="0"/><use href="#cC" y="-38"/><use href="#cC" y="-76"/><use href="#cC" y="-114"/>
+    </g>
+  </svg>
+  <div class="bg-glow" id="bgGlow"></div>
+</div>
+<canvas id="neural" aria-hidden="true"></canvas>
+<canvas id="globe" aria-hidden="true"></canvas>
+
+<!-- ================= TOP BAR ================= -->
+<header id="topbar">
+  <div class="mx-auto max-w-[1400px] px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+    <button id="brand" class="flex items-center gap-3 group" aria-label="Ouvrir le sommaire">
+      <span class="monogram"><i data-lucide="globe"></i></span>
+      <span class="hidden sm:block text-left leading-tight">
+        <span class="block font-display font-bold text-navy text-[13.5px] tracking-wide">GeoAI · Intelligence Spatiale</span>
+        <span class="block font-mono2 text-[9.5px] uppercase tracking-[.2em] text-cy">Master 1 · Smart Cities · Métiers de la Ville</span>
+      </span>
+    </button>
+    <div class="flex items-center gap-3">
+      <span class="hidden lg:inline font-mono2 text-[10px] uppercase tracking-[.2em] text-slate-500">Module GIS / SIG · CC · 2026–2027</span>
+      <button id="counter" class="glass rounded-full px-3.5 py-2" aria-label="Sommaire des diapositives">
+        <b id="cCur" class="text-navy">01</b><span class="opacity-40"> / 11</span>
+      </button>
+    </div>
+  </div>
+  <div class="progress-track"><div id="progress"></div></div>
+</header>
+
+<!-- ================= DECK ================= -->
+<main id="deck">
+<!-- ============ SLIDE 1 — COUVERTURE ============ -->
+<section class="slide" data-title="Couverture — GeoAI">
+  <div class="slide-inner">
+    <div class="fit grid md:grid-cols-12 gap-8 items-center">
+      <div class="md:col-span-7">
+        <span class="eyebrow rv" style="--d:.05s"><i data-lucide="sparkles"></i> Projet CC · Module GIS / SIG</span>
+        <h1 class="hero-title mt-4 rv" style="--d:.15s">GeoAI : <span class="grad">L'Intelligence Artificielle</span> au Service de l'Information Géospatiale</h1>
+        <p class="lead mt-4 rv" style="--d:.26s">Transformer la donnée satellite en connaissance spatiale — modèles de vision par ordinateur intégrés aux Systèmes d'Information Géographique.</p>
+        <div class="flex flex-wrap gap-2.5 mt-5 rv" style="--d:.36s">
+          <span class="badge"><i data-lucide="graduation-cap"></i> Master 1 · Smart Cities Engineering (Métiers de la Ville)</span>
+          <span class="badge"><i data-lucide="building-2"></i> Département d'Architecture</span>
+          <span class="badge"><i data-lucide="university"></i> Faculté de Technologie</span>
+          <span class="badge"><i data-lucide="map-pin"></i> Université Yahia Farès de Médéa · 2026-2027</span>
+          <span class="badge"><i data-lucide="user-check"></i> Encadrant : Dr. Amel KELLOU</span>
+        </div>
+        <div class="flex flex-wrap gap-3 mt-5 rv" style="--d:.46s">
+          <button class="cta cta-primary" data-go="1">Commencer <i data-lucide="arrow-right"></i></button>
+          <button class="cta cta-ghost" data-index><i data-lucide="list"></i> Sommaire</button>
+        </div>
+        <p class="cap mt-5 rv" style="--d:.56s">Réalisé par <b class="text-navy">1. BENKORTBI OUSSAMA</b> &nbsp;·&nbsp; <b class="text-navy">2. TAHRAOUI IKRAM</b><br>Département d'Architecture · Faculté de Technologie · Université Yahia Farès de Médéa</p>
+      </div>
+      <div class="hidden md:block md:col-span-5" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 2 — FONDEMENTS ============ -->
+<section class="slide" data-title="Fondements — Géodésie · SIG · IA">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="layers"></i> 02 · Fondements</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">Trois disciplines, une intersection : <span class="grad">la GeoAI</span></h2>
+      <p class="lead mt-3 rv" style="--d:.2s">Chaque pilier apporte une contrainte que les deux autres rendent féconde.</p>
+      <div class="grid md:grid-cols-3 gap-5 mt-6">
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.28s">
+          <div class="flex items-center gap-3"><span class="ico-sq"><i data-lucide="globe"></i></span>
+            <div><span class="lbl">Pilier 01</span><h3 class="ttl">Géodésie</h3></div></div>
+          <p class="bd mt-3"><b>Le cadre planétaire.</b> Positionner juste tout objet sur la Terre : ellipsoïde, projections, référentiels.</p>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">WGS84</span><span class="chip">Projections</span><span class="chip">Coordonnées</span></div>
+          <div class="rule my-3"></div><span class="lbl">Rôle : justesse spatiale</span>
+        </div>
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.38s">
+          <div class="flex items-center gap-3"><span class="ico-sq"><i data-lucide="database"></i></span>
+            <div><span class="lbl">Pilier 02</span><h3 class="ttl">SIG</h3></div></div>
+          <p class="bd mt-3"><b>La base relationnelle.</b> Stocker, relier et interroger les couches géographiques et leurs attributs.</p>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">Tables attributaires</span><span class="chip">Jointures spatiales</span><span class="chip">SQL</span></div>
+          <div class="rule my-3"></div><span class="lbl">Rôle : mémoire du territoire</span>
+        </div>
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.48s">
+          <div class="flex items-center gap-3"><span class="ico-sq"><i data-lucide="brain"></i></span>
+            <div><span class="lbl">Pilier 03</span><h3 class="ttl">Intelligence Artificielle</h3></div></div>
+          <p class="bd mt-3"><b>La puissance cognitive.</b> Apprendre les patterns et inférer là où la règle manuelle s'arrête.</p>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">Apprentissage profond</span><span class="chip">Inférence</span><span class="chip">Généralisation</span></div>
+          <div class="rule my-3"></div><span class="lbl">Rôle : moteur d'interprétation</span>
+        </div>
+      </div>
+      <div class="dark-panel mt-6 p-4 flex flex-wrap items-center justify-center gap-3 text-center rv" style="--d:.58s">
+        <span class="badge">Géodésie · positionner</span><span class="font-mono2 text-cy">+</span>
+        <span class="badge">SIG · structurer</span><span class="font-mono2 text-cy">+</span>
+        <span class="badge">IA · comprendre</span><span class="font-mono2 text-cy">=</span>
+        <b class="font-display text-[15px] text-white tracking-widest">GEOAI</b>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 3 — PIPELINE ANIMÉ ============ -->
+<section class="slide" data-title="De l'Espace à la Carte — Pipeline GeoAI">
+  <div class="slide-inner">
+    <div class="fit">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <span class="eyebrow rv" style="--d:.05s"><i data-lucide="video"></i> 03 · Simulation interactive</span>
+          <h2 class="h2 mt-3 rv" style="--d:.12s">De l'Espace à la Carte : <span class="grad">Comment la GeoAI Analyse un Territoire</span></h2>
+          <p class="lead mt-2 rv" style="--d:.2s">Simulation interactive : Acquisition satellitaire (Médéa), réception station sol (ASAL Ouargla) et segmentation IA.</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5 rv" style="--d:.24s">
+          <span class="chip">Médéa · 36.27°N / 3.35°E</span>
+          <span class="chip">Ouargla · 31.95°N / 5.33°E</span>
+        </div>
+      </div>
+
+      <div class="pipe-card glass mt-4 rv" style="--d:.3s">
+        <div class="pipe-top">
+          <div class="flex items-center gap-3 min-w-0">
+            <span class="pipe-live"><i></i> Live</span>
+            <div class="min-w-0">
+              <p class="pipe-kicker" id="pipeKicker">Étape 1 / 4 · Orbite &amp; balayage</p>
+              <p class="pipe-phase-title" id="pipePhaseTitle">Capture satellitaire — Ville de Médéa</p>
+            </div>
+          </div>
+          <button class="pipe-play" id="pipePlay" type="button" aria-label="Mettre la simulation en pause">
+            <span id="pipePlayIco"><svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></span>
+            <span id="pipePlayTxt">Pause</span>
+          </button>
+        </div>
+        <div class="pipe-stage" id="pipeStage">
+          <svg viewBox="0 0 1200 470" role="img" aria-label="Simulation animée : capture satellitaire à Médéa, transmission vers la station sol ASAL de Ouargla, pixellisation CNN et segmentation vectorielle.">
+            <defs>
+              <linearGradient id="pgBg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#0B2545"/><stop offset=".55" stop-color="#0F2F52"/><stop offset="1" stop-color="#081B2F"/>
+              </linearGradient>
+              <linearGradient id="pgBeam" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#7CE7FF" stop-opacity=".5"/><stop offset="1" stop-color="#7CE7FF" stop-opacity=".05"/>
+              </linearGradient>
+              <linearGradient id="pgRoad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#6B7684"/><stop offset="1" stop-color="#4B5563"/>
+              </linearGradient>
+              <linearGradient id="pgBldg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2B6BE8"/><stop offset="1" stop-color="#1D4ED8"/>
+              </linearGradient>
+              <linearGradient id="pgMetal" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#E8EDF2"/><stop offset=".5" stop-color="#B9C4CF"/><stop offset="1" stop-color="#8B98A6"/>
+              </linearGradient>
+              <radialGradient id="pgGlow">
+                <stop offset="0" stop-color="#7CE7FF" stop-opacity=".5"/><stop offset="1" stop-color="#7CE7FF" stop-opacity="0"/>
+              </radialGradient>
+              <pattern id="pgMesh" width="26" height="26" patternUnits="userSpaceOnUse">
+                <path d="M26 0H0V26" fill="none" stroke="rgba(125,211,252,.07)" stroke-width="1"/>
+              </pattern>
+              <clipPath id="pgGroundClip"><rect x="40" y="168" width="330" height="252" rx="12"/></clipPath>
+              <clipPath id="pgFrameClip"><rect x="150" y="240" width="96" height="96"/></clipPath>
+            </defs>
+
+            <rect width="1200" height="470" fill="url(#pgBg)"/>
+            <rect width="1200" height="470" fill="url(#pgMesh)"/>
+            <rect x="16" y="14" width="578" height="442" rx="18" fill="rgba(255,255,255,.035)" stroke="rgba(125,211,252,.16)"/>
+            <rect x="606" y="14" width="578" height="442" rx="18" fill="rgba(255,255,255,.035)" stroke="rgba(125,211,252,.16)"/>
+            <g id="pBridge">
+              <path d="M594 235 H606" stroke="#7CE7FF" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+              <circle id="pBridgeDot" cx="600" cy="235" r="3.2" fill="#B8F2FF"/>
+            </g>
+            <text x="40" y="44" font-size="9" letter-spacing=".18em" fill="#7DD3FC">01 · ESPACE &amp; SOL</text>
+            <text x="40" y="58" font-size="7.5" letter-spacing=".1em" fill="#5E8CA8">ACQUISITION · TRANSMISSION · PRÉTRAITEMENT</text>
+            <text x="630" y="44" font-size="9" letter-spacing=".18em" fill="#7DD3FC">02 · VISION PAR ORDINATEUR</text>
+            <text x="630" y="58" font-size="7.5" letter-spacing=".1em" fill="#5E8CA8">PIXELLISATION · CNN · SEGMENTATION</text>
+            <text x="552" y="44" text-anchor="end" font-size="7.5" letter-spacing=".12em" fill="#4F7E99">MÉDÉA → OUARGLA</text>
+            <text x="1160" y="44" text-anchor="end" font-size="7.5" letter-spacing=".12em" fill="#4F7E99">U-NET · COG</text>
+            <g id="pGround">
+              <rect x="40" y="168" width="330" height="252" rx="12" fill="#E7E2D6" stroke="rgba(255,255,255,.18)"/>
+              <g clip-path="url(#pgGroundClip)">
+                <rect x="206" y="168" width="58" height="252" fill="url(#pgRoad)"/>
+                <rect x="40" y="286" width="330" height="46" fill="url(#pgRoad)"/>
+                <rect x="198" y="168" width="8" height="252" fill="#CFC8B8"/>
+                <rect x="264" y="168" width="8" height="252" fill="#CFC8B8"/>
+                <rect x="40" y="278" width="330" height="8" fill="#CFC8B8"/>
+                <rect x="40" y="332" width="330" height="8" fill="#CFC8B8"/>
+                <line x1="235" y1="170" x2="235" y2="418" stroke="#F8FAFC" stroke-width="2.2" stroke-dasharray="9 11" opacity=".8"/>
+                <line x1="42" y1="309" x2="368" y2="309" stroke="#F8FAFC" stroke-width="2.2" stroke-dasharray="9 11" opacity=".8"/>
+                <g fill="#B9B1A0">
+                  <rect x="57" y="185" width="62" height="38" rx="3"/>
+                  <rect x="127" y="185" width="68" height="38" rx="3"/>
+                  <rect x="57" y="231" width="62" height="41" rx="3"/>
+                  <rect x="127" y="231" width="68" height="41" rx="3"/>
+                  <rect x="277" y="185" width="85" height="38" rx="3"/>
+                  <rect x="277" y="231" width="85" height="41" rx="3"/>
+                  <rect x="57" y="345" width="62" height="65" rx="3"/>
+                  <rect x="127" y="345" width="68" height="65" rx="3"/>
+                  <rect x="277" y="345" width="85" height="65" rx="3"/>
+                </g>
+                <g fill="#DCD5C5" stroke="#B4AC9A" stroke-width="1">
+                  <rect x="54" y="182" width="62" height="38" rx="3"/>
+                  <rect x="124" y="182" width="68" height="38" rx="3"/>
+                  <rect x="54" y="228" width="62" height="41" rx="3"/>
+                  <rect x="124" y="228" width="68" height="41" rx="3"/>
+                  <rect x="274" y="182" width="85" height="38" rx="3"/>
+                  <rect x="274" y="228" width="85" height="41" rx="3"/>
+                  <rect x="54" y="342" width="62" height="65" rx="3"/>
+                  <rect x="124" y="342" width="68" height="65" rx="3"/>
+                  <rect x="274" y="342" width="85" height="65" rx="3"/>
+                </g>
+                <g fill="none" stroke="rgba(120,112,96,.45)" stroke-width="1">
+                  <path d="M124 201h68M124 247h68M54 201h62M54 247h62M274 201h85M274 247h85M54 374h62M124 374h68M274 374h85"/>
+                </g>
+                <circle cx="190" cy="212" r="6" fill="#7FA37A" stroke="#5F8259"/>
+                <circle cx="190" cy="262" r="5" fill="#7FA37A" stroke="#5F8259"/>
+                <circle cx="190" cy="362" r="5.5" fill="#7FA37A" stroke="#5F8259"/>
+                <circle cx="268" cy="208" r="5" fill="#7FA37A" stroke="#5F8259"/>
+                <circle cx="268" cy="390" r="5.5" fill="#7FA37A" stroke="#5F8259"/>
+                <rect x="214" y="224" width="11" height="19" rx="2" fill="#E2E8F0"/>
+                <rect x="243" y="360" width="11" height="19" rx="2" fill="#1D4ED8"/>
+                <rect x="150" y="299" width="19" height="11" rx="2" fill="#E7B23C"/>
+                <rect x="318" y="300" width="19" height="11" rx="2" fill="#CBD5E1"/>
+                <g stroke="#F8FAFC" stroke-width="1.6" opacity=".75">
+                  <path d="M208 280h54M208 284h54M208 288h54M208 292h54"/>
+                  <path d="M210 334h50M210 338h50M210 342h50"/>
+                </g>
+              </g>
+              <text x="42" y="438" font-size="8" letter-spacing=".14em" fill="#5E8CA8">MÉDÉA · VUE SATELLITE 2026</text>
+            </g>
+
+            <polygon id="pBeam" points="" fill="url(#pgBeam)"/>
+
+            <g id="pFrame">
+              <rect x="150" y="240" width="96" height="96" rx="3" fill="rgba(124,231,255,.07)" stroke="#7CE7FF" stroke-width="1.5" stroke-dasharray="7 5"/>
+              <g stroke="#DFF7FF" stroke-width="2.6" stroke-linecap="round" fill="none">
+                <path d="M150 254v-14h14M232 240h14v14M246 322v14h-14M164 336h-14v-14"/>
+              </g>
+            </g>
+            <g clip-path="url(#pgFrameClip)">
+              <rect id="pScan" x="150" y="240" width="96" height="3" fill="#B8F2FF" opacity="0"/>
+            </g>
+            <rect id="pFlash" x="150" y="240" width="96" height="96" fill="#FFFFFF" opacity="0"/>
+
+            <g id="pSat" transform="translate(86 82)">
+              <circle r="34" fill="url(#pgGlow)" opacity=".65"/>
+              <rect x="-18" y="-12" width="36" height="24" rx="5" fill="url(#pgMetal)" stroke="#7A8794" stroke-width=".8"/>
+              <rect x="-18" y="-4" width="36" height="8" fill="#D9A521" opacity=".9"/>
+              <rect x="-66" y="-10" width="44" height="20" rx="2" fill="#1D4ED8" stroke="#0B2545" stroke-width=".8"/>
+              <path d="M-66 -3H-22M-66 3H-22M-55 -10V10M-44 -10V10M-33 -10V10" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+              <rect x="22" y="-10" width="44" height="20" rx="2" fill="#1D4ED8" stroke="#0B2545" stroke-width=".8"/>
+              <path d="M22 -3H66M22 3H66M33 -10V10M44 -10V10M55 -10V10" stroke="rgba(255,255,255,.35)" stroke-width=".7"/>
+              <path d="M0 12v6" stroke="#D9A521" stroke-width="1.6"/>
+              <ellipse cx="0" cy="19" rx="7" ry="3" fill="#E7B23C"/>
+              <circle cx="0" cy="22" r="2" fill="#7CE7FF"/>
+            </g>
+
+            <path id="pLink" d="" fill="none" stroke="#7CE7FF" stroke-width="1.3" stroke-dasharray="5 6" opacity="0"/>
+            <circle id="pLinkDot" r="3" fill="#B8F2FF" opacity="0"/>
+
+            <g id="pWaves" fill="none" stroke="#7CE7FF" stroke-width="1.5" opacity="1">
+              <circle id="pWave1" cx="428" cy="268" r="10" opacity="0"/>
+              <circle id="pWave2" cx="428" cy="268" r="18" opacity="0"/>
+              <circle id="pWave3" cx="428" cy="268" r="26" opacity="0"/>
+            </g>
+
+            <g id="pDish" transform="translate(455 292)">
+              <circle cx="0" cy="-8" r="34" fill="url(#pgGlow)" opacity=".3"/>
+              <g transform="rotate(-32)">
+                <path d="M-34 -8C-28 -38 28 -38 34 -8C20 8 -20 8 -34 -8Z" fill="#E7B23C" stroke="#B4831C" stroke-width="1.2"/>
+                <path d="M-20 -10C-14 -26 14 -26 20 -10" fill="none" stroke="#8A6212" stroke-width="1"/>
+                <line x1="0" y1="-8" x2="0" y2="-34" stroke="#F1CE7A" stroke-width="1.6"/>
+                <circle cx="0" cy="-36" r="2.6" fill="#FFF3C4"/>
+              </g>
+              <path d="M0 2V62" stroke="#94A3B8" stroke-width="4"/>
+              <path d="M-16 64H16" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+              <circle cx="0" cy="2" r="4" fill="#CBD5E1"/>
+            </g>
+
+            <rect x="376" y="214" width="198" height="24" rx="12" fill="rgba(11,37,69,.7)" stroke="rgba(125,211,252,.3)"/>
+            <text x="475" y="230" text-anchor="middle" font-size="9" letter-spacing=".1em" fill="#CFEFFF">STATION SOL ASAL — OUARGLA</text>
+
+            <g id="pServer">
+              <rect x="496" y="326" width="90" height="66" rx="8" fill="#12304F" stroke="rgba(125,211,252,.45)"/>
+              <rect x="504" y="334" width="74" height="30" rx="4" fill="#0A1D30" stroke="rgba(125,211,252,.25)"/>
+              <path d="M510 356L521 344L530 350L541 338L552 346L563 340L572 348" fill="none" stroke="#38BDF8" stroke-width="1.4"/>
+              <circle id="pLed1" cx="508" cy="378" r="2.6" fill="#22C55E"/>
+              <circle id="pLed2" cx="518" cy="378" r="2.6" fill="#38BDF8"/>
+              <circle id="pLed3" cx="528" cy="378" r="2.6" fill="#E7B23C"/>
+              <rect x="540" y="372" width="38" height="8" rx="2" fill="rgba(255,255,255,.12)"/>
+            </g>
+            <text x="544" y="410" text-anchor="middle" font-size="7.5" letter-spacing=".08em" fill="#5E8CA8">PRÉTRAITEMENT &amp;</text>
+            <text x="544" y="421" text-anchor="middle" font-size="7.5" letter-spacing=".08em" fill="#5E8CA8">GÉORÉFÉRENCEMENT COG</text>
+
+            <path id="pLink2" d="M455 352C470 362 482 362 496 360" fill="none" stroke="#38BDF8" stroke-width="2" stroke-dasharray="6 5"/>
+            <circle id="pFlowDot" r="3" fill="#B8F2FF" opacity="0"/>
+
+            <text id="pRightLabel" x="652" y="104" font-size="8" letter-spacing=".16em" fill="#7DD3FC">FLUX ENTRANT · VISION PAR ORDINATEUR</text>
+
+            <g id="pRightIdle">
+              <rect x="742" y="140" width="312" height="150" rx="12" fill="rgba(125,211,252,.035)" stroke="rgba(125,211,252,.3)" stroke-dasharray="5 7"/>
+              <text x="898" y="178" text-anchor="middle" font-size="9" letter-spacing=".2em" fill="#9FD9F0">RÉCEPTION DU FLUX</text>
+              <text x="898" y="198" text-anchor="middle" font-size="7.5" letter-spacing=".1em" fill="#6E9AB2">MÉDÉA → ASAL OUARGLA → COG</text>
+              <rect x="790" y="222" width="216" height="5" rx="2.5" fill="rgba(125,211,252,.14)"/>
+              <rect id="pBuffer" x="790" y="222" width="0" height="5" rx="2.5" fill="#38BDF8"/>
+              <text id="pBufferTxt" x="898" y="252" text-anchor="middle" font-size="8" letter-spacing=".12em" fill="#7DD3FC">0 %</text>
+              <g fill="#38BDF8" opacity=".5">
+                <circle cx="874" cy="272" r="2"/><circle cx="886" cy="272" r="2"/><circle cx="898" cy="272" r="2"/><circle cx="910" cy="272" r="2"/><circle cx="922" cy="272" r="2"/>
+              </g>
+            </g>
+
+            <g id="pGrid" opacity="0"></g>
+
+            <g id="pKernel" opacity="0">
+              <rect width="78" height="78" rx="3" fill="rgba(124,231,255,.16)" stroke="#7CE7FF" stroke-width="2"/>
+              <path d="M0 39H78M39 0V78" stroke="rgba(124,231,255,.55)" stroke-width="1"/>
+              <circle cx="39" cy="39" r="3" fill="#DFF7FF"/>
+            </g>
+
+            <g id="pVector" opacity="0">
+              <rect x="642" y="110" width="280" height="204" rx="10" fill="#EDE9E0" stroke="rgba(255,255,255,.3)"/>
+              <rect x="756" y="120" width="52" height="182" fill="#64748B" stroke="#334155" stroke-width="1.4"/>
+              <rect x="652" y="198" width="260" height="52" fill="#64748B" stroke="#334155" stroke-width="1.4"/>
+              <line x1="782" y1="120" x2="782" y2="302" stroke="#F8FAFC" stroke-width="2.4" stroke-dasharray="9 10"/>
+              <line x1="652" y1="224" x2="912" y2="224" stroke="#F8FAFC" stroke-width="2.4" stroke-dasharray="9 10"/>
+              <g fill="url(#pgBldg)" stroke="#FFFFFF" stroke-width="1.6">
+                <rect x="652" y="120" width="104" height="78"/>
+                <rect x="808" y="120" width="104" height="78"/>
+                <rect x="652" y="250" width="104" height="52"/>
+                <rect x="808" y="250" width="104" height="52"/>
+              </g>
+              <g fill="rgba(255,255,255,.22)">
+                <rect x="668" y="132" width="72" height="6" rx="3"/>
+                <rect x="824" y="132" width="72" height="6" rx="3"/>
+              </g>
+              <text transform="rotate(-90 782 165)" x="782" y="165" text-anchor="middle" font-size="7.5" letter-spacing=".24em" fill="#E2E8F0">ROUTE</text>
+              <text x="652" y="308" font-size="7" letter-spacing=".12em" fill="#94A3B8">MÉDÉA · CARTE VECTORIELLE</text>
+              <g>
+                <rect x="642" y="326" width="134" height="20" rx="10" fill="#64748B"/>
+                <text x="709" y="340" text-anchor="middle" font-size="8.5" fill="#FFFFFF">Route — 98.4%</text>
+                <rect x="786" y="326" width="146" height="20" rx="10" fill="#1D4ED8"/>
+                <text x="859" y="340" text-anchor="middle" font-size="8.5" fill="#FFFFFF">Bâtiments — 96.7%</text>
+              </g>
+            </g>
+
+            <g id="pMatrix" opacity="0">
+              <text x="936" y="116" font-size="7.5" letter-spacing=".14em" fill="#5E8CA8">MATRICE CNN · 3 CANAUX</text>
+              <g id="pMatrixNums"></g>
+              <text x="936" y="300" font-size="7" letter-spacing=".1em" fill="#5E8CA8">KERNEL 3×3 · STRIDE 1</text>
+            </g>
+
+            <g id="pStats" opacity="0">
+              <line x1="652" y1="362" x2="1160" y2="362" stroke="rgba(125,211,252,.16)"/>
+              <text x="652" y="382" font-size="7.5" letter-spacing=".14em" fill="#6E9AB2">SORTIE DU MODÈLE</text>
+              <text x="652" y="400" font-size="10" fill="#DFF5FF">U-Net · masque sémantique</text>
+              <text x="900" y="382" font-size="7.5" letter-spacing=".14em" fill="#6E9AB2">RÉSOLUTION</text>
+              <text x="900" y="400" font-size="10" fill="#DFF5FF">10 m / pixel · COG</text>
+              <text x="1040" y="382" font-size="7.5" letter-spacing=".14em" fill="#6E9AB2">IoU MOYEN</text>
+              <text x="1040" y="400" font-size="14" font-weight="600" fill="#7CE7FF">0.94</text>
+            </g>
+
+          </svg>
+        </div>
+        <div class="pipe-timeline" id="pipeSteps">
+          <button class="pipe-step on" type="button" data-step="1">
+            <span class="ps-top"><span class="ps-n">01</span><span class="ps-t">Capture satellitaire</span></span>
+            <span class="ps-s">Ville de Médéa · orbite</span>
+            <span class="ps-bar"><i></i></span>
+          </button>
+          <button class="pipe-step" type="button" data-step="2">
+            <span class="ps-top"><span class="ps-n">02</span><span class="ps-t">Transmission ASAL</span></span>
+            <span class="ps-s">Station sol · Ouargla</span>
+            <span class="ps-bar"><i></i></span>
+          </button>
+          <button class="pipe-step" type="button" data-step="3">
+            <span class="ps-top"><span class="ps-n">03</span><span class="ps-t">Pixellisation CNN</span></span>
+            <span class="ps-s">Noyau 3×3 · matrice</span>
+            <span class="ps-bar"><i></i></span>
+          </button>
+          <button class="pipe-step" type="button" data-step="4">
+            <span class="ps-top"><span class="ps-n">04</span><span class="ps-t">Segmentation finale</span></span>
+            <span class="ps-s">Route &amp; bâtiments · vecteurs</span>
+            <span class="ps-bar"><i></i></span>
+          </button>
+        </div>
+      </div>
+      <p class="cap mt-2 rv" style="--d:.4s">Flux complet : capteur optique → station sol ASAL (Ouargla) → prétraitement COG → CNN 3×3 → carte vectorielle. Cliquez une étape de la timeline pour la rejouer.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 4 — RUPTURE ============ -->
+<section class="slide" data-title="Rupture Technologique — SIG vs GeoAI">
+  <div class="slide-inner">
+    <div class="fit">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span class="eyebrow rv" style="--d:.05s"><i data-lucide="git-compare"></i> 04 · Rupture technologique</span>
+          <h2 class="h2 mt-4 rv" style="--d:.12s">Du SIG classique à la GeoAI : <span class="grad">changer de paradigme</span></h2>
+        </div>
+        <div class="flex gap-2 rv" style="--d:.2s" id="segCtl" role="tablist">
+          <button class="chip seg on" data-seg="both" type="button">Vue d'ensemble</button>
+          <button class="chip seg" data-seg="old" type="button">SIG classique</button>
+          <button class="chip seg" data-seg="new" type="button">GeoAI</button>
+        </div>
+      </div>
+      <div class="relative grid md:grid-cols-2 gap-5 mt-6" id="ruptureGrid">
+        <div class="glass card rounded-2xl p-5 rv" data-pane="old" style="--d:.28s">
+          <div class="flex items-start justify-between gap-3">
+            <div><span class="lbl">Avant · l'ère artisanale</span><h3 class="ttl mt-1">SIG classique</h3></div>
+            <span class="ico-sq"><i data-lucide="pen-tool"></i></span>
+          </div>
+          <ul class="mt-3 space-y-2 bd list-none p-0">
+            <li>▸ Numérisation manuelle des objets, couche par couche.</li>
+            <li>▸ Calibration et co-registrement pas à pas.</li>
+            <li>▸ Règles statiques écrites par l'expert.</li>
+            <li>▸ Analyse séquentielle, difficile à répéter à l'échelle.</li>
+          </ul>
+          <div class="rule my-3"></div>
+          <div class="flex flex-wrap gap-1.5"><span class="chip">Opérateur au centre</span><span class="chip">Cycle long</span><span class="chip">Non parallélisable</span></div>
+        </div>
+        <div class="dark-panel p-5 rv" data-pane="new" style="--d:.38s">
+          <div class="flex items-start justify-between gap-3">
+            <div><span class="lbl" style="color:#7dd3fc">Maintenant · l'ère cognitive</span><h3 class="ttl mt-1 text-white">GeoAI</h3></div>
+            <span class="ico-sq" style="background:rgba(255,255,255,.14);color:#8FE3FF"><i data-lucide="brain"></i></span>
+          </div>
+          <ul class="mt-3 space-y-2 bd list-none p-0" style="color:rgba(255,255,255,.82)">
+            <li>▸ Inférence cognitive automatisée sur toute la zone.</li>
+            <li>▸ Alignment appris par vision par ordinateur.</li>
+            <li>▸ Patterns extraits des données, pas pré-écrits.</li>
+            <li>▸ Mise à l'échelle GPU : des millions d'images.</li>
+          </ul>
+          <div class="rule my-3" style="background:linear-gradient(90deg,rgba(125,211,252,.4),transparent)"></div>
+          <div class="flex flex-wrap gap-1.5">
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">Modèle au centre</span>
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">Cycle court</span>
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">Reproductible</span>
+          </div>
+        </div>
+        <div class="vs" aria-hidden="true">VS</div>
+      </div>
+      <p class="cap mt-4 rv" style="--d:.5s">Rupture épistémologique : on ne décrit plus le territoire à la main — on le laisse le modèle <b>lire</b> l'image et <b>déduire</b> la carte.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 5 — DONNÉES SPATIALES ============ -->
+<section class="slide" data-title="Données Spatiales & Télédétection">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="satellite"></i> 05 · Données spatiales & télédétection</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">Avant tout modèle : <span class="grad">une donnée propre, calée, lisible</span></h2>
+      <div class="grid md:grid-cols-3 gap-5 mt-6">
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.22s">
+          <div class="flex items-center gap-3"><span class="ico-sq"><i data-lucide="image"></i></span><h3 class="ttl">Imagerie satellitaire HD</h3></div>
+          <ul class="mt-3 space-y-2 bd list-none p-0">
+            <li>▸ Plurispectre : la lumière révèle la matière.</li>
+            <li>▸ De 10 m (Sentinel-2) au décimètre (Pléiades).</li>
+            <li>▸ Séries temporelles = historique du territoire.</li>
+          </ul>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">Sentinel-2</span><span class="chip">Landsat</span><span class="chip">Pléiades</span></div>
+        </div>
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.32s">
+          <div class="flex items-center gap-3"><span class="ico-sq"><i data-lucide="file-image"></i></span><h3 class="ttl">Formats optimisés</h3></div>
+          <ul class="mt-3 space-y-2 bd list-none p-0">
+            <li>▸ GeoTIFF : géoréférence embarquée.</li>
+            <li>▸ COG : tuiles, lecture HTTP partielle, pyramides.</li>
+            <li>▸ Catalogage STAC pour l'orchestration.</li>
+          </ul>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">GeoTIFF</span><span class="chip">COG</span><span class="chip">STAC</span></div>
+        </div>
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.42s">
+          <div class="flex items-center gap-3"><span class="ico-sq"><i data-lucide="crosshair"></i></span><h3 class="ttl">Co-registrement auto.</h3></div>
+          <ul class="mt-3 space-y-2 bd list-none p-0">
+            <li>▸ La vision par ordinateur aligne les prises de vue.</li>
+            <li>▸ Points-clés + homographies, sans GPS précis.</li>
+            <li>▸ SuperGlue : appariement robuste des features.</li>
+          </ul>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">SIFT</span><span class="chip">SuperGlue</span><span class="chip">Homographies</span></div>
+        </div>
+      </div>
+      <div class="cool-panel mt-6 p-4 flex flex-wrap items-center gap-2 rv" style="--d:.52s">
+        <span class="lbl mr-1">Pipeline de données</span>
+        <span class="chip">Acquisition</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+        <span class="chip">Correction des nuages</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+        <span class="chip">Co-registrement</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+        <span class="chip">Tuilage COG</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+        <span class="chip" style="background:rgba(0,102,153,.14);border-color:rgba(0,102,153,.3);color:#006699;font-weight:600">Prêt pour le modèle</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 6 — CNN ============ -->
+<section class="slide" data-title="Architectures Deep Learning — CNN">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="cpu"></i> 06 · Architectures deep learning</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">CNN : des filtres qui <span class="grad">apprennent à voir</span></h2>
+      <p class="lead mt-3 rv" style="--d:.2s">Inspiré du cortex visuel biologique — un empilement de convolutions transforme les pixels en concepts.</p>
+      <div class="grid md:grid-cols-12 gap-5 mt-6">
+        <div class="md:col-span-4 space-y-3">
+          <div class="glass rounded-xl p-3.5 rv" style="--d:.28s"><span class="lbl">01 · Extraction</span>
+            <p class="bd mt-1"><b>Couche convolutive</b> — des noyaux 3×3 détectent bords, textures et formes.</p></div>
+          <div class="glass rounded-xl p-3.5 rv" style="--d:.36s"><span class="lbl">02 · Hiérarchie</span>
+            <p class="bd mt-1"><b>Profondeur</b> — bords → motifs → objets : la représentation s'affine couche après couche.</p></div>
+          <div class="glass rounded-xl p-3.5 rv" style="--d:.44s"><span class="lbl">03 · Compression</span>
+            <p class="bd mt-1"><b>Pooling</b> — réduction de dimension et invariance aux déplacements.</p></div>
+        </div>
+        <div class="md:col-span-8 glass rounded-2xl p-5 rv" style="--d:.34s">
+          <div class="flex items-center justify-between"><span class="lbl">Architecture type</span>
+            <span class="cap">entrée image → sortie décision</span></div>
+          <div class="flex flex-wrap items-center gap-2 mt-4">
+            <span class="chip">Image</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">Conv 3×3 · 32</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">ReLU</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">MaxPool</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">Conv 3×3 · 64</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">Feature maps</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">Dense</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip" style="background:rgba(0,102,153,.14);border-color:rgba(0,102,153,.3);color:#006699;font-weight:600">Sortie</span>
+          </div>
+          <div class="mt-5">
+            <span class="lbl">Cartes de caractéristiques</span>
+            <div class="flex flex-wrap gap-1.5 mt-2" aria-hidden="true">
+              <i class="fm" style="--o:.85"></i><i class="fm" style="--o:.7"></i><i class="fm" style="--o:.55"></i><i class="fm" style="--o:.9"></i>
+              <i class="fm" style="--o:.4"></i><i class="fm" style="--o:.75"></i><i class="fm" style="--o:.6"></i><i class="fm" style="--o:.3"></i>
+              <i class="fm" style="--o:.8"></i><i class="fm" style="--o:.5"></i><i class="fm" style="--o:.65"></i><i class="fm" style="--o:.95"></i>
+              <i class="fm" style="--o:.35"></i><i class="fm" style="--o:.7"></i><i class="fm" style="--o:.45"></i><i class="fm" style="--o:.8"></i>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-5">
+            <span class="chip">Kernels 3×3</span><span class="chip">Feature maps</span><span class="chip">ReLU</span><span class="chip">Pooling</span><span class="chip">Parallélisé GPU</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ============ SLIDE 7 — U-NET / YOLO ============ -->
+<section class="slide" data-title="Segmentation & Détection — U-Net · YOLO">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="scan"></i> 07 · Segmentation & détection</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">Deux modèles stars : <span class="grad">U-Net</span> et <span class="grad">YOLO</span></h2>
+      <div class="grid md:grid-cols-2 gap-5 mt-6">
+        <div class="cool-panel card p-5 rv" style="--d:.24s">
+          <div class="flex items-start justify-between gap-3">
+            <div><span class="lbl">Segmentation sémantique</span><h3 class="ttl mt-1">U-Net — dessiner le masque</h3></div>
+            <span class="ico-sq"><i data-lucide="layers"></i></span>
+          </div>
+          <p class="bd mt-3">Chaque pixel reçoit une classe : <b>bâtiments, routes, eau, végétation</b>. Architecture en U, encodeur puis décodeur.</p>
+          <div class="flex items-center gap-2 mt-4 flex-wrap">
+            <span class="chip">Encoder</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">Bottleneck</span><i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>
+            <span class="chip">Decoder</span>
+            <span class="chip" style="background:rgba(0,102,153,.14);border-color:rgba(0,102,153,.3);color:#006699">Skip-connections</span>
+          </div>
+          <div class="rule my-3"></div>
+          <p class="cap">✓ Précision des contours · ✓ Peu de données d'entraînement · ✓ Sortie : masque par classe</p>
+        </div>
+        <div class="dark-panel card p-5 rv" style="--d:.36s">
+          <div class="flex items-start justify-between gap-3">
+            <div><span class="lbl" style="color:#7dd3fc">Détection d'objets</span><h3 class="ttl mt-1 text-white">YOLO — voir en une passe</h3></div>
+            <span class="ico-sq" style="background:rgba(255,255,255,.14);color:#8FE3FF"><i data-lucide="focus"></i></span>
+          </div>
+          <p class="bd mt-3" style="color:rgba(255,255,255,.82)">Localiser <b>+ classifier</b> simultanément, en un seul passage du réseau — idéal pour l'analyse rapide de vastes zones.</p>
+          <div class="flex flex-wrap gap-1.5 mt-4">
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">bâtiment 0.94</span>
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">route 0.89</span>
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">eau 0.97</span>
+            <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">végétation 0.86</span>
+          </div>
+          <div class="rule my-3" style="background:linear-gradient(90deg,rgba(125,211,252,.4),transparent)"></div>
+          <p class="cap" style="color:rgba(255,255,255,.6)">✓ Boîtes + classes en temps réel · ✓ Une seule passe forward · ✓ Échelle industrielle</p>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 mt-5 rv" style="--d:.48s">
+        <span class="lbl mr-1">Choisir selon la tâche</span>
+        <span class="chip">Carte d'occupation du sol → U-Net</span>
+        <span class="chip">Inventaire d'objets → YOLO</span>
+        <span class="chip">Les deux → pipeline complet</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 8 — PRÉDICTIVE ============ -->
+<section class="slide" data-title="Analyse Spatiale Prédictive">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="activity"></i> 08 · Analyse spatiale prédictive</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">Anticiper : <span class="grad">du changement observé au risque prédit</span></h2>
+      <div class="grid md:grid-cols-12 gap-5 mt-5">
+        <div class="md:col-span-5 space-y-3">
+          <div class="glass rounded-xl p-3.5 rv" style="--d:.24s">
+            <div class="flex items-center gap-2.5"><span class="ico-sq" style="width:30px;height:30px;border-radius:9px"><i data-lucide="clock" class="w-4 h-4"></i></span><h3 class="ttl">Modélisation spatiotemporelle</h3></div>
+            <p class="bd mt-2">Croiser temps et espace : les séries d'images révèlent la dynamique du territoire (croissance urbaine, érosion).</p>
+          </div>
+          <div class="glass rounded-xl p-3.5 rv" style="--d:.34s">
+            <div class="flex items-center gap-2.5"><span class="ico-sq" style="width:30px;height:30px;border-radius:9px"><i data-lucide="git-compare" class="w-4 h-4"></i></span><h3 class="ttl">Change Detection</h3></div>
+            <p class="bd mt-2">Soustraire deux dates pour révéler les zones transformées — détection automatique des changements.</p>
+          </div>
+          <div class="glass rounded-xl p-3.5 rv" style="--d:.44s">
+            <div class="flex items-center gap-2.5"><span class="ico-sq" style="width:30px;height:30px;border-radius:9px"><i data-lucide="alert-circle" class="w-4 h-4"></i></span><h3 class="ttl">Cartographie des risques</h3></div>
+            <p class="bd mt-2">Cartes prédictives des <b>crues</b> et de l'<b>érosion</b> : prioriser les zones d'intervention avant l'événement.</p>
+          </div>
+        </div>
+        <div class="md:col-span-7 glass rounded-2xl p-4 rv" style="--d:.4s">
+          <div class="flex items-center justify-between gap-3">
+            <span class="lbl">Démo · Change detection</span>
+            <span class="cap"><b id="cdDateA" class="text-navy">2019</b> ← glisser → <b class="text-cy">2026</b></span>
+          </div>
+          <div class="cd-stage mt-3 frame" id="cdStage">
+            <div class="cd-a" style="position:absolute;inset:0"><img src="cartographie_drone.jpg" alt="Imagerie aérienne de référence, 2019"></div>
+            <div class="cd-b" id="cdOverlay">
+              <img src="cartographie_drone.jpg" alt="Imagerie aérienne détectée, 2026">
+              <svg viewBox="0 0 400 225" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M232,152 C262,122 312,130 342,152 C367,170 357,198 312,202 C262,207 222,187 232,152 Z" fill="rgba(0,153,204,.22)" stroke="#00A6D6" stroke-width="2"/>
+                <path d="M212,38 C252,28 302,50 312,84 C320,112 282,130 244,122 C206,114 187,68 212,38 Z" fill="rgba(29,78,216,.18)" stroke="#1D4ED8" stroke-width="2"/>
+                <path d="M248,96 L318,89 L325,133 L255,141 Z" fill="rgba(0,102,153,.16)" stroke="#006699" stroke-width="2" stroke-dasharray="6 5"/>
+              </svg>
+            </div>
+            <div class="cd-handle" id="cdHandle"></div>
+            <span class="cd-tag cd-tag-l">Référence</span>
+            <span class="cd-tag cd-tag-r">Zones détectées</span>
+          </div>
+          <input type="range" id="cdRange" min="4" max="96" value="50" class="cd-range mt-3" aria-label="Curseur de comparaison avant / après">
+          <p class="cap mt-2">Fig. — différence d'images : les polygones cyan marquent les changements détectés (inondables / bâti).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 9 — WORKFLOW ============ -->
+<section class="slide" data-title="Workflow GeoAI Moderne">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="workflow"></i> 09 · Workflow GeoAI moderne</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">Le pipeline complet, <span class="grad">de l'image à la carte</span></h2>
+      <p class="lead mt-3 rv" style="--d:.18s">Cliquez une étape pour voir son rôle et ses outils.</p>
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-5" id="wfSteps">
+        <button class="wf-step rv on" style="--d:.26s" type="button" data-t="Acquisition" data-d="Collecte des sources : imagerie satellitaire, cadastre, couches SIG existantes et catalogues ouverts (STAC)." data-tools="Sentinel-2,Landsat,STAC,WMS">
+          <span class="wf-n">01</span><span class="wf-t block mt-2 font-display font-semibold text-navy text-[14px]">Acquisition</span>
+          <span class="wf-d block mt-1 text-[11.5px] text-slate-500 leading-snug">Satellite · cadastre · catalogues</span>
+        </button>
+        <button class="wf-step rv" style="--d:.34s" type="button" data-t="Prétraitement" data-d="Nettoyage, masquage des nuages, co-registrement et tuillage COG — la donnée devient propre et lisible par le modèle." data-tools="Python,Rasterio,GDAL,GeoPandas">
+          <span class="wf-n">02</span><span class="wf-t block mt-2 font-display font-semibold text-navy text-[14px]">Prétraitement</span>
+          <span class="wf-d block mt-1 text-[11.5px] text-slate-500 leading-snug">Python · Rasterio · GDAL</span>
+        </button>
+        <button class="wf-step rv" style="--d:.42s" type="button" data-t="Inférence IA" data-d="Le modèle entraîné (CNN / U-Net / YOLO) prédit sur chaque tuile : masques, objets, classes — parallélisé sur GPU." data-tools="PyTorch,ONNX,U-Net,YOLOv8">
+          <span class="wf-n">03</span><span class="wf-t block mt-2 font-display font-semibold text-navy text-[14px]">Inférence IA</span>
+          <span class="wf-d block mt-1 text-[11.5px] text-slate-500 leading-snug">PyTorch · ONNX · GPU</span>
+        </button>
+        <button class="wf-step rv" style="--d:.5s" type="button" data-t="Cartographie SIG" data-d="Vectorisation des résultats, publication des couches et aide à la décision dans l'environnement SIG habituel." data-tools="QGIS,PostGIS,GeoServer">
+          <span class="wf-n">04</span><span class="wf-t block mt-2 font-display font-semibold text-navy text-[14px]">Cartographie SIG</span>
+          <span class="wf-d block mt-1 text-[11.5px] text-slate-500 leading-snug">QGIS · PostGIS · GeoServer</span>
+        </button>
+      </div>
+      <div class="dark-panel mt-5 p-5 rv" style="--d:.58s" id="wfDetail">
+        <div class="flex flex-wrap items-center gap-3 justify-between">
+          <div class="min-w-0">
+            <span class="lbl" style="color:#7dd3fc">Étape sélectionnée</span>
+            <h3 class="ttl mt-1 text-white" id="wfTitle">Acquisition</h3>
+            <p class="bd mt-1.5" id="wfDesc" style="color:rgba(255,255,255,.8)">Collecte des sources : imagerie satellitaire, cadastre, couches SIG existantes et catalogues ouverts (STAC).</p>
+          </div>
+          <div class="flex flex-wrap gap-1.5" id="wfTools"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 10 — DÉFIS ============ -->
+<section class="slide" data-title="Défis & Perspectives">
+  <div class="slide-inner">
+    <div class="fit">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="shield-check"></i> 10 · Défis & perspectives</span>
+      <h2 class="h2 mt-4 rv" style="--d:.12s">Trois défis pour <span class="grad">une GeoAI de confiance</span></h2>
+      <div class="grid md:grid-cols-3 gap-5 mt-6">
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.24s">
+          <span class="ico-sq"><i data-lucide="database"></i></span>
+          <h3 class="ttl mt-3">Qualité des données</h3>
+          <p class="bd mt-2">L'apprentissage ne vaut mieux que son étiquetage : annotation coûteuse, biais d'échantillonnage, généralisation entre régions.</p>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">Annotation</span><span class="chip">Biais</span><span class="chip">Benchmarks</span></div>
+        </div>
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.34s">
+          <span class="ico-sq"><i data-lucide="eye"></i></span>
+          <h3 class="ttl mt-3">Explicabilité — XAI</h3>
+          <p class="bd mt-2">Cartes de saillance, confiance calibrée : l'aménageur doit comprendre <b>pourquoi</b> le modèle a tracé cette frontière.</p>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">Saliency</span><span class="chip">Calibrage</span><span class="chip">Confiance</span></div>
+        </div>
+        <div class="glass card rounded-2xl p-5 rv" style="--d:.44s">
+          <span class="ico-sq"><i data-lucide="route"></i></span>
+          <h3 class="ttl mt-3">Cartographie autonome</h3>
+          <p class="bd mt-2">Auto-labelling et modèles de fond géospatiaux : la carte se met à jour presque seule, l'humain reste dans la boucle.</p>
+          <div class="flex flex-wrap gap-1.5 mt-3"><span class="chip">Auto-labeling</span><span class="chip">Fondation</span><span class="chip">Human-in-the-loop</span></div>
+        </div>
+      </div>
+      <div class="dark-panel mt-6 p-5 flex flex-wrap items-center gap-4 justify-between rv" style="--d:.54s">
+        <div>
+          <span class="lbl" style="color:#7dd3fc">Perspective</span>
+          <p class="font-display font-semibold text-white mt-1 text-[15px]">Vers une carte qui apprend : modèles de fond géospatiaux + XAI intégrée + expertise humaine.</p>
+        </div>
+        <div class="flex gap-2 flex-wrap">
+          <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">Fondation models</span>
+          <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">XAI</span>
+          <span class="chip" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff">Copilote géospatial</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 11 — FICHE OFFICIELLE ============ -->
+<section class="slide" data-title="Fiche Officielle du Projet">
+  <div class="slide-inner">
+    <div class="fit max-w-4xl mx-auto">
+      <div class="glass rounded-3xl overflow-hidden rv" style="--d:.1s">
+        <div class="dark-panel rounded-none p-5 flex flex-wrap items-center gap-4 justify-between" style="border-radius:0">
+          <div class="flex items-center gap-3">
+            <span class="monogram"><i data-lucide="award"></i></span>
+            <div>
+              <span class="lbl" style="color:#7dd3fc">11 · Fiche officielle</span>
+              <h2 class="font-display font-bold text-white text-[17px] leading-tight mt-0.5">Fiche du Projet — GeoAI &amp; SIG</h2>
+            </div>
+          </div>
+          <span class="badge">Évaluation CC · Semestre 1</span>
+        </div>
+        <div class="p-5 sm:p-6 grid sm:grid-cols-2 gap-x-6 gap-y-4">
+          <div class="sm:col-span-2 fiche-row">
+            <span class="lbl">Réalisé par</span>
+            <div class="flex flex-wrap gap-2 mt-1.5">
+              <span class="badge"><b class="font-mono2 text-cy">1.</b> BENKORTBI OUSSAMA <span class="font-ar opacity-60">بن قرطبي أسامة</span></span>
+              <span class="badge"><b class="font-mono2 text-cy">2.</b> TAHRAOUI IKRAM <span class="font-ar opacity-60">طهراوي إكرام</span></span>
+            </div>
+          </div>
+          <div class="fiche-row">
+            <span class="lbl">Encadré par</span>
+            <p class="ttl mt-1"><i data-lucide="user-check" class="w-4 h-4 inline text-cy mr-1.5"></i>Dr. Amel KELLOU</p>
+          </div>
+          <div class="fiche-row">
+            <span class="lbl">Module</span>
+            <p class="ttl mt-1"><i data-lucide="layers" class="w-4 h-4 inline text-cy mr-1.5"></i>GIS (Geographic Information Systems and Spatial Data)</p>
+          </div>
+          <div class="sm:col-span-2 fiche-row">
+            <span class="lbl">Domaine &amp; Filière</span>
+            <p class="bd mt-1"><b class="text-navy">Architecture, Urbanisme et Métiers de la Ville</b> — <b class="text-navy">Master 1 Smart Cities Engineering (Métiers de la Ville)</b></p>
+          </div>
+          <div class="sm:col-span-2 fiche-row">
+            <span class="lbl">Structure</span>
+            <p class="bd mt-1">Département d'Architecture <span class="opacity-40">|</span> Faculté de Technologie <span class="opacity-40">|</span> <b class="text-navy">Université Yahia Farès de Médéa</b> (2026 - 2027)</p>
+          </div>
+          <div class="sm:col-span-2 fiche-row">
+            <span class="lbl">Cadre</span>
+            <p class="bd mt-1">Évaluation Contrôle Continu (CC) — <span class="font-ar">جامعة المدية</span></p>
+          </div>
+        </div>
+        <div class="px-5 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3" style="background:rgba(19,64,116,.06);border-top:1px solid var(--line)">
+          <span class="cap">Département d'Architecture · Faculté de Technologie · Université Yahia Farès de Médéa · 2026-2027</span>
+          <button class="cta cta-primary" data-go="0" style="padding:.55rem 1.1rem;font-size:12px">Revenir à la couverture <i data-lucide="arrow-up"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ================= BOTTOM NAV ================= -->
+<div id="bottomnav">
+  <div class="mx-auto max-w-[1400px] px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+    <button class="navbtn" id="prev" aria-label="Diapositive précédente"><i data-lucide="arrow-left"></i></button>
+    <div class="flex items-center gap-5 min-w-0">
+      <div id="dots" class="flex items-center gap-2.5 overflow-hidden"></div>
+      <span class="hidden xl:block cap whitespace-nowrap"><kbd>←</kbd> <kbd>→</kbd> naviguer · <kbd>G</kbd> sommaire</span>
+    </div>
+    <button class="navbtn" id="next" aria-label="Diapositive suivante"><i data-lucide="arrow-right"></i></button>
+  </div>
+</div>
+
+<!-- ================= INDEX OVERLAY ================= -->
+<div id="indexOverlay" role="dialog" aria-modal="true" aria-label="Sommaire des diapositives">
+  <div class="glass rounded-3xl p-6 w-[min(700px,92vw)] max-h-[86vh] overflow-auto">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <span class="lbl">Navigation</span>
+        <h2 class="font-display font-bold text-navy text-lg mt-0.5">Sommaire — 11 diapositives</h2>
+      </div>
+      <button class="navbtn" id="idxClose" aria-label="Fermer le sommaire"><i data-lucide="x"></i></button>
+    </div>
+    <div id="idxList" class="grid sm:grid-cols-2 gap-1.5 mt-4"></div>
+    <div class="rule my-4"></div>
+    <p class="cap"><kbd>←</kbd> <kbd>→</kbd> naviguer · <kbd>Espace</kbd> suivant · <kbd>G</kbd> sommaire · <kbd>Échap</kbd> fermer · swipe tactile</p>
+  </div>
+</div>
+<script>
+/* ==========================================================
+   GEOAI DECK — engine, interactions, neural mesh
+   ========================================================== */
+(function(){
+  'use strict';
+  var $  = function(s,c){ return (c||document).querySelector(s); };
+  var $$ = function(s,c){ return Array.prototype.slice.call((c||document).querySelectorAll(s)); };
+
+  function drawIcons(){ try{ if(window.lucide) lucide.createIcons({attrs:{'stroke-width':1.7}}); }catch(e){} }
+  drawIcons();
+
+  /* ---------------- deck core ---------------- */
+  var slides = $$('.slide');
+  var N = slides.length;
+  var BUSY_MS = 850;
+  var cur = -1, busy = false;
+
+  var dotsWrap = $('#dots');
+  slides.forEach(function(s,i){
+    var b = document.createElement('button');
+    b.className = 'dot'; b.type = 'button';
+    b.setAttribute('aria-label','Diapositive '+(i+1)+' — '+(s.dataset.title||''));
+    b.addEventListener('click', function(){ go(i); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = $$('.dot', dotsWrap);
+
+  var progress = $('#progress'), cCur = $('#cCur');
+  var prevBtn = $('#prev'), nextBtn = $('#next');
+  var overlay = $('#indexOverlay'), idxList = $('#idxList');
+  var indexOpen = false;
+
+  /* ---------------- fit-to-viewport (zero scroll) ---------------- */
+  function fitOne(slide){
+    var inner = slide.querySelector('.slide-inner');
+    var fit = slide.querySelector('.fit');
+    if(!inner || !fit) return;
+    fit.style.transform = 'none';
+    var cs = getComputedStyle(inner);
+    var avail = inner.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    var h = fit.offsetHeight;
+    var scale = 1;
+    if(h > avail && avail > 0) scale = Math.max(.4, avail / h);
+    fit.style.transform = scale < 1 ? 'scale('+scale+')' : '';
+  }
+  function fitAll(){ slides.forEach(fitOne); }
+
+  /* ---------------- navigation ---------------- */
+  function go(i, skipHash){
+    i = ((i % N) + N) % N;
+    if(i === cur || busy) return;
+    var dirFwd = i > cur;
+    busy = true;
+    var prevSlide = slides[cur];
+    if(prevSlide){
+      prevSlide.classList.remove('active');
+      prevSlide.classList.add(dirFwd ? 'exit-fwd' : 'exit-back');
+      (function(ps){ setTimeout(function(){ ps.classList.remove('exit-fwd','exit-back'); }, 950); })(prevSlide);
+    }
+    cur = i;
+    var el = slides[cur];
+    fitOne(el);
+    /* setTimeout (not rAF): state transitions must not depend on frame callbacks */
+    setTimeout(function(){
+      el.classList.remove('exit-fwd','exit-back');
+      el.classList.add('active');
+    }, 20);
+    dots.forEach(function(d,k){ d.classList.toggle('on', k === cur); });
+    cCur.textContent = ('0'+(cur+1)).slice(-2);
+    progress.style.width = (((cur+1)/N)*100)+'%';
+    prevBtn.disabled = (cur === 0);
+    nextBtn.disabled = (cur === N-1);
+    if(!skipHash){ try{ history.replaceState(null,'','#slide-'+(cur+1)); }catch(e){} }
+    document.body.classList.toggle('on-cover', cur === 0);
+    try{ document.dispatchEvent(new CustomEvent('geoai:slide', { detail: { index: cur } })); }catch(e){}
+    onSlideEnter(cur);
+    setTimeout(function(){ busy = false; }, BUSY_MS);
+  }
+
+  prevBtn.addEventListener('click', function(){ go(cur-1); });
+  nextBtn.addEventListener('click', function(){ go(cur+1); });
+  $$('[data-go]').forEach(function(b){ b.addEventListener('click', function(){ go(parseInt(b.dataset.go,10)); }); });
+
+  /* ---------------- index overlay ---------------- */
+  slides.forEach(function(s,i){
+    var b = document.createElement('button');
+    b.className = 'idx-item'; b.type = 'button';
+    b.innerHTML = '<span class="n">'+('0'+(i+1)).slice(-2)+'</span>'+
+      '<span class="flex-1 font-display font-semibold text-navy text-[13px]">'+(s.dataset.title||'')+'</span>'+
+      '<i data-lucide="chevron-right" class="w-3.5 h-3.5 text-cy"></i>';
+    b.addEventListener('click', function(){ hideIndex(); go(i); });
+    idxList.appendChild(b);
+  });
+  drawIcons();
+
+  function showIndex(){ indexOpen = true; overlay.classList.add('show'); }
+  function hideIndex(){ indexOpen = false; overlay.classList.remove('show'); }
+  function toggleIndex(){ indexOpen ? hideIndex() : showIndex(); }
+  $('#brand').addEventListener('click', toggleIndex);
+  $('#counter').addEventListener('click', toggleIndex);
+  $$('[data-index]').forEach(function(b){ b.addEventListener('click', toggleIndex); });
+  $('#idxClose').addEventListener('click', hideIndex);
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) hideIndex(); });
+
+  /* ---------------- keyboard ---------------- */
+  addEventListener('keydown', function(e){
+    var tag = (e.target.tagName || '').toLowerCase();
+    if(tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+    if(e.key === 'Escape'){ hideIndex(); return; }
+    if(e.key === 'g' || e.key === 'G'){ e.preventDefault(); toggleIndex(); return; }
+    if(indexOpen) return;
+    if(tag === 'button' && (e.key === ' ' || e.key === 'Enter')) return;
+    switch(e.key){
+      case 'ArrowRight': case 'PageDown': case ' ': case 'Spacebar':
+        e.preventDefault(); go(cur+1); break;
+      case 'ArrowLeft': case 'PageUp':
+        e.preventDefault(); go(cur-1); break;
+      case 'Home': e.preventDefault(); go(0); break;
+      case 'End': e.preventDefault(); go(N-1); break;
+    }
+  });
+
+  /* ---------------- touch swipe ---------------- */
+  var tx=0, ty=0, tt=0;
+  var deck = $('#deck');
+  deck.addEventListener('touchstart', function(e){
+    var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY; tt = Date.now();
+  }, {passive:true});
+  deck.addEventListener('touchend', function(e){
+    var t = e.changedTouches[0];
+    var dx = t.clientX - tx, dy = t.clientY - ty;
+    if(Date.now()-tt < 700 && Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)*1.4){
+      go(cur + (dx < 0 ? 1 : -1));
+    }
+  }, {passive:true});
+
+  /* ---------------- slide 3 : comparator ---------------- */
+  var segCtl = $('#segCtl');
+  if(segCtl){
+    segCtl.addEventListener('click', function(e){
+      var btn = e.target.closest('.seg'); if(!btn) return;
+      $$('.seg', segCtl).forEach(function(s){ s.classList.toggle('on', s === btn); });
+      var mode = btn.dataset.seg;
+      var oldP = $('[data-pane="old"]'), newP = $('[data-pane="new"]');
+      oldP.classList.remove('dim','lift'); newP.classList.remove('dim','lift');
+      if(mode === 'old'){ newP.classList.add('dim'); oldP.classList.add('lift'); }
+      if(mode === 'new'){ oldP.classList.add('dim'); newP.classList.add('lift'); }
+    });
+  }
+
+  /* ---------------- slide 7 : change-detection slider ---------------- */
+  var cdRange = $('#cdRange');
+  if(cdRange){
+    var cdOverlay = $('#cdOverlay'), cdHandle = $('#cdHandle');
+    var cdUpdate = function(){
+      var v = cdRange.value;
+      cdOverlay.style.clipPath = 'inset(0 0 0 '+v+'%)';
+      cdHandle.style.left = v+'%';
+    };
+    cdRange.addEventListener('input', cdUpdate);
+    cdUpdate();
+  }
+
+  /* ---------------- slide 8 : workflow pipeline ---------------- */
+  var wfSteps = $$('.wf-step'), wfTitle = $('#wfTitle'), wfDesc = $('#wfDesc'), wfTools = $('#wfTools');
+  var wfTimer = null, wfUserPicked = false, wfIdx = 0;
+  function wfSelect(i, manual){
+    wfIdx = i;
+    wfSteps.forEach(function(s,k){ s.classList.toggle('on', k === i); });
+    var s = wfSteps[i];
+    if(!s) return;
+    wfTitle.textContent = s.dataset.t;
+    wfDesc.textContent = s.dataset.d;
+    wfTools.innerHTML = '';
+    (s.dataset.tools || '').split(',').forEach(function(t){
+      var c = document.createElement('span');
+      c.className = 'chip';
+      c.style.cssText = 'background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:#cfeaff';
+      c.textContent = t.trim();
+      wfTools.appendChild(c);
+    });
+    if(manual){ wfUserPicked = true; if(wfTimer){ clearInterval(wfTimer); wfTimer = null; } }
+  }
+  wfSteps.forEach(function(s,i){ s.addEventListener('click', function(){ wfSelect(i, true); }); });
+  function wfStart(){
+    if(wfUserPicked || wfTimer) return;
+    wfTimer = setInterval(function(){ wfSelect((wfIdx+1) % wfSteps.length); }, 2400);
+  }
+  function wfStop(){ if(wfTimer){ clearInterval(wfTimer); wfTimer = null; } }
+  wfSelect(0);
+
+  function onSlideEnter(i){
+    if(i === 8) wfStart(); else wfStop();
+    fitOne(slides[i]);
+  }
+
+  /* ---------------- neural network mesh (background) ---------------- */
+  var ncv = $('#neural'), nctx = ncv.getContext('2d');
+  var NW = 0, NH = 0, nodes = [], pulses = [];
+  var mouse = {x:-9999, y:-9999};
+
+  function xLimit(){ return NW > 1100 ? NW*0.66 : NW*0.94; }
+  function sizeNeural(){
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    NW = innerWidth; NH = innerHeight;
+    ncv.width = Math.round(NW*dpr); ncv.height = Math.round(NH*dpr);
+    ncv.style.width = NW+'px'; ncv.style.height = NH+'px';
+    nctx.setTransform(dpr,0,0,dpr,0,0);
+    buildNodes();
+  }
+  function buildNodes(){
+    nodes = [];
+    var count = Math.round(Math.min(80, Math.max(24, (NW*NH)/17000)));
+    var lim = xLimit();
+    for(var i=0;i<count;i++){
+      nodes.push({
+        x: Math.random()*lim, y: 50 + Math.random()*(NH-110),
+        vx: (Math.random()-.5)*.16, vy: (Math.random()-.5)*.16,
+        r: 1 + Math.random()*1.7, ph: Math.random()*Math.PI*2, hl: 0
+      });
+    }
+  }
+  function spawnPulse(){
+    if(pulses.length > 12 || nodes.length < 2) return;
+    var i = (Math.random()*nodes.length)|0, a = nodes[i], best = -1, bd = 1e9;
+    for(var j=0;j<nodes.length;j++){
+      if(j === i) continue;
+      var dx = a.x-nodes[j].x, dy = a.y-nodes[j].y, d = dx*dx+dy*dy;
+      if(d < 22500 && d < bd){ bd = d; best = j; }
+    }
+    if(best >= 0) pulses.push({a:i, b:best, p:0, sp:.006 + Math.random()*.008});
+  }
+
+  function drawNeural(t){
+    nctx.clearRect(0,0,NW,NH);
+    var lim = xLimit(), i, j, n;
+    for(i=0;i<nodes.length;i++){
+      n = nodes[i];
+      n.x += n.vx; n.y += n.vy;
+      if(n.x < 0 || n.x > lim) n.vx *= -1;
+      if(n.y < 40 || n.y > NH-40) n.vy *= -1;
+      var dx = n.x-mouse.x, dy = n.y-mouse.y, d2 = dx*dx+dy*dy;
+      n.hl = d2 < 17000 ? (1 - d2/17000) : 0;
+    }
+    /* links */
+    nctx.lineWidth = 1;
+    for(i=0;i<nodes.length;i++){
+      for(j=i+1;j<nodes.length;j++){
+        var a = nodes[i], b = nodes[j];
+        var lx = a.x-b.x, ly = a.y-b.y;
+        var d = Math.sqrt(lx*lx + ly*ly);
+        if(d < 150){
+          var al = (1 - d/150)*.15;
+          nctx.strokeStyle = 'rgba(19,64,116,'+al.toFixed(3)+')';
+          nctx.beginPath(); nctx.moveTo(a.x,a.y); nctx.lineTo(b.x,b.y); nctx.stroke();
+        }
+      }
+    }
+    /* data pulses along links */
+    if(Math.random() < .02) spawnPulse();
+    for(i=pulses.length-1;i>=0;i--){
+      var pu = pulses[i];
+      pu.p += pu.sp;
+      if(pu.p >= 1){ pulses.splice(i,1); continue; }
+      var pa = nodes[pu.a], pb = nodes[pu.b];
+      if(!pa || !pb){ pulses.splice(i,1); continue; }
+      var px = pa.x + (pb.x-pa.x)*pu.p, py = pa.y + (pb.y-pa.y)*pu.p;
+      var fade = Math.sin(pu.p*Math.PI);
+      nctx.fillStyle = 'rgba(0,160,220,'+(0.75*fade).toFixed(3)+')';
+      nctx.beginPath(); nctx.arc(px, py, 2.1, 0, 6.283); nctx.fill();
+      nctx.strokeStyle = 'rgba(0,160,220,'+(0.3*fade).toFixed(3)+')';
+      nctx.beginPath(); nctx.arc(px, py, 5.5, 0, 6.283); nctx.stroke();
+    }
+    /* nodes */
+    for(i=0;i<nodes.length;i++){
+      n = nodes[i];
+      var tw = .5 + .5*Math.sin(t/900 + n.ph);
+      var rr = n.r * (1 + n.hl*.9);
+      nctx.fillStyle = n.hl > 0
+        ? 'rgba(0,102,153,'+(0.35 + 0.5*n.hl).toFixed(3)+')'
+        : 'rgba(19,64,116,'+(0.15 + 0.17*tw).toFixed(3)+')';
+      nctx.beginPath(); nctx.arc(n.x, n.y, rr, 0, 6.283); nctx.fill();
+      if(n.hl > 0){
+        nctx.strokeStyle = 'rgba(0,102,153,'+(0.32*n.hl).toFixed(3)+')';
+        nctx.beginPath(); nctx.arc(n.x, n.y, rr + 7*n.hl, 0, 6.283); nctx.stroke();
+      }
+    }
+  }
+
+  addEventListener('mousemove', function(e){
+    mouse.x = e.clientX; mouse.y = e.clientY;
+    var g = $('#bgGlow');
+    if(g){
+      g.style.setProperty('--mx', ((e.clientX/innerWidth)*100).toFixed(2)+'%');
+      g.style.setProperty('--my', ((e.clientY/innerHeight)*100).toFixed(2)+'%');
+    }
+  }, {passive:true});
+  addEventListener('mouseleave', function(){ mouse.x = -9999; mouse.y = -9999; });
+
+  /* ---------------- main loop ---------------- */
+  function loop(t){
+    drawNeural(t);
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------------- boot ---------------- */
+  var rt = null;
+  addEventListener('resize', function(){
+    clearTimeout(rt);
+    rt = setTimeout(function(){ sizeNeural(); fitAll(); }, 140);
+  });
+
+  function boot(){
+    sizeNeural();
+    var m = /^#slide-(\d{1,2})$/.exec(location.hash);
+    var start = m ? Math.min(N-1, Math.max(0, parseInt(m[1],10)-1)) : 0;
+    go(start, true);
+    fitAll();
+    requestAnimationFrame(loop);
+  }
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){ fitAll(); });
+  }
+  if(document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(boot, 30);
+  else addEventListener('DOMContentLoaded', function(){ setTimeout(boot, 30); });
+  addEventListener('load', fitAll);
+  addEventListener('hashchange', function(){
+    var m = /^#slide-(\d{1,2})$/.exec(location.hash);
+    if(m){ var i = parseInt(m[1],10)-1; if(i !== cur) go(i, true); }
+  });
+})();
+</script>
+<script>
+/* ==========================================================
+   SLIDE 3 — ANIMATED GEOAI PIPELINE (video-like loop)
+   ========================================================== */
+(function(){
+  'use strict';
+  var stage = document.getElementById('pipeStage');
+  if(!stage) return;
+  var NS = 'http://www.w3.org/2000/svg';
+  var $ = function(id){ return document.getElementById(id); };
+
+  var el = {
+    sat: $('pSat'), beam: $('pBeam'), scan: $('pScan'), frame: $('pFrame'), flash: $('pFlash'),
+    link: $('pLink'), linkDot: $('pLinkDot'), link2: $('pLink2'), flowDot: $('pFlowDot'),
+    waves: [$('pWave1'), $('pWave2'), $('pWave3')],
+    grid: $('pGrid'), kernel: $('pKernel'), matrix: $('pMatrix'), nums: $('pMatrixNums'),
+    vector: $('pVector'), idle: $('pRightIdle'), rightLabel: $('pRightLabel'),
+    bridgeDot: $('pBridgeDot'), led1: $('pLed1'), led2: $('pLed2'), led3: $('pLed3'),
+    stats: $('pStats'), buffer: $('pBuffer'), bufferTxt: $('pBufferTxt'),
+    kicker: $('pipeKicker'), title: $('pipePhaseTitle'),
+    playBtn: $('pipePlay'), playIco: $('pipePlayIco'), playTxt: $('pipePlayTxt'),
+    steps: Array.prototype.slice.call(document.querySelectorAll('#pipeSteps .pipe-step'))
+  };
+  if(!el.sat || !el.grid) return;
+
+  /* ---------- build the pixel grid (10 x 7) ---------- */
+  var COLS = 10, ROWS = 7, CELL = 26, GX = 652, GY = 120;
+  var cells = [];
+  function cellType(c, r){
+    if(c === 4 || c === 5) return 'road';
+    if(r === 3 || r === 4) return 'road';
+    if((c <= 3 || c >= 6) && (r <= 2 || r >= 5)) return 'bldg';
+    return 'ground';
+  }
+  for(var r = 0; r < ROWS; r++){
+    for(var c = 0; c < COLS; c++){
+      var t = cellType(c, r);
+      var v = ((c*7 + r*13) % 5) * 5;
+      var fill = t === 'road' ? 'rgb(71,85,105)'
+        : t === 'bldg' ? 'rgb(' + (231+v) + ',' + (224+v) + ',' + (208+v) + ')'
+        : 'rgb(' + (150+v) + ',' + (166+v) + ',' + (138+v) + ')';
+      var rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('x', GX + c*CELL + 0.6);
+      rect.setAttribute('y', GY + r*CELL + 0.6);
+      rect.setAttribute('width', CELL - 1.2);
+      rect.setAttribute('height', CELL - 1.2);
+      rect.setAttribute('rx', '2');
+      rect.setAttribute('fill', fill);
+      rect.setAttribute('stroke', 'rgba(11,37,69,.35)');
+      rect.setAttribute('stroke-width', '0.7');
+      rect.setAttribute('opacity', '0');
+      el.grid.appendChild(rect);
+      cells.push(rect);
+    }
+  }
+
+  /* ---------- build the numeric matrix ---------- */
+  var numEls = [];
+  for(var mr = 0; mr < 7; mr++){
+    for(var mc = 0; mc < 5; mc++){
+      var tx = document.createElementNS(NS, 'text');
+      tx.setAttribute('x', 936 + mc*42);
+      tx.setAttribute('y', 140 + mr*21);
+      tx.setAttribute('font-size', '8.5');
+      tx.setAttribute('fill', '#8FD3EE');
+      tx.setAttribute('opacity', '.85');
+      tx.textContent = '0.00';
+      el.nums.appendChild(tx);
+      numEls.push(tx);
+    }
+  }
+
+  var P = 4.2, TOTAL = P*4;
+  var elapsed = 0, playing = true, last = performance.now();
+  var lastPhase = 0, lastTick = -1, link2Len = 0;
+  var reduce = false;
+  try{ reduce = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  if(reduce) playing = false;
+
+  var PHASES = [
+    { k:'Étape 1 / 4 · Orbite & balayage',            t:'Capture satellitaire — Ville de Médéa' },
+    { k:'Étape 2 / 4 · Téléchargement & prétraitement', t:'Transmission — Station Sol ASAL, Ouargla' },
+    { k:'Étape 3 / 4 · Convolution 3×3',               t:'Pixellisation & filtres CNN' },
+    { k:'Étape 4 / 4 · Vectorisation',                 t:'Segmentation & extraction finale' }
+  ];
+
+  function clamp01(v){ return v < 0 ? 0 : v > 1 ? 1 : v; }
+  function ease(v){ v = clamp01(v); return v*v*(3 - 2*v); }
+  function setA(node, v){ if(node) node.setAttribute('opacity', v.toFixed(3)); }
+
+  function updatePlay(){
+    if(!el.playBtn) return;
+    el.playBtn.setAttribute('aria-label', playing ? 'Mettre la simulation en pause' : 'Lancer la simulation');
+    if(el.playTxt) el.playTxt.textContent = playing ? 'Pause' : 'Lecture';
+    if(el.playIco) el.playIco.innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.2v13.6c0 .8.9 1.3 1.6.9l10.4-6.8c.6-.4.6-1.3 0-1.7L9.6 4.3C8.9 3.9 8 4.4 8 5.2z"/></svg>';
+  }
+  function setStep(k){ elapsed = (k-1)*P + 0.001; playing = true; updatePlay(); }
+
+  el.steps.forEach(function(btn){
+    btn.addEventListener('click', function(){ setStep(parseInt(btn.getAttribute('data-step'), 10)); });
+  });
+  if(el.playBtn) el.playBtn.addEventListener('click', function(){ playing = !playing; updatePlay(); });
+
+  document.addEventListener('geoai:slide', function(e){
+    if(e.detail && e.detail.index === 2){
+      elapsed = 0; playing = !reduce; last = performance.now(); updatePlay();
+    }
+  });
+
+  var slideEl = stage.closest ? stage.closest('.slide') : null;
+
+  function frame(now){
+    var dt = Math.min((now - last)/1000, .06);
+    last = now;
+    var active = slideEl && slideEl.classList.contains('active');
+    if(playing && active) elapsed += dt;
+    if(!active){ requestAnimationFrame(frame); return; }
+
+    var tt = elapsed % TOTAL;
+    var phase = Math.min(4, Math.floor(tt/P) + 1);
+    var p = (tt - (phase-1)*P) / P;
+
+    if(phase !== lastPhase){
+      lastPhase = phase;
+      if(el.kicker) el.kicker.textContent = PHASES[phase-1].k;
+      if(el.title) el.title.textContent = PHASES[phase-1].t;
+      el.steps.forEach(function(s, k){
+        s.classList.toggle('on', k === phase-1);
+        s.classList.toggle('done', k < phase-1);
+      });
+    }
+
+    /* timeline progress */
+    el.steps.forEach(function(s, k){
+      var bar = s.querySelector('.ps-bar i');
+      if(!bar) return;
+      bar.style.width = (k < phase-1 ? 100 : (k === phase-1 ? p*100 : 0)).toFixed(1) + '%';
+    });
+
+    /* satellite travels over phases 1-2 */
+    var sp = phase === 1 ? p*.5 : phase === 2 ? .5 + p*.5 : 1;
+    var sx = 86 + sp*296;
+    var sy = 82 + Math.sin(tt*1.7)*5;
+    el.sat.setAttribute('transform', 'translate(' + sx.toFixed(1) + ',' + sy.toFixed(1) + ')');
+
+    /* scan beam onto the Médéa street */
+    var fx = 150, fy = 240, fw = 96, fh = 96;
+    el.beam.setAttribute('points',
+      sx.toFixed(1) + ',' + (sy+16).toFixed(1) + ' ' +
+      fx + ',' + fy + ' ' + (fx+fw) + ',' + fy + ' ' +
+      (fx+fw) + ',' + (fy+fh) + ' ' + fx + ',' + (fy+fh));
+    setA(el.beam, phase === 1 ? .58 : phase === 2 ? .16 : .07);
+    el.scan.setAttribute('y', (fy + p*fh).toFixed(1));
+    setA(el.scan, phase === 1 ? .9 : 0);
+    setA(el.frame, phase === 1 ? 1 : .35);
+    setA(el.flash, (phase === 1 && p > .86) ? (1 - (p - .86)/.14)*.32 : 0);
+
+    /* satellite → dish link */
+    var cxp = sx + 110, cyp = sy + 120;
+    el.link.setAttribute('d', 'M' + sx.toFixed(1) + ' ' + sy.toFixed(1) +
+      ' Q' + cxp.toFixed(1) + ' ' + cyp.toFixed(1) + ' 452 252');
+    setA(el.link, phase === 2 ? .9 : (phase === 1 ? .08 : .22));
+    if(phase === 2){
+      var u = (tt*.55) % 1;
+      el.linkDot.setAttribute('cx', ((1-u)*(1-u)*sx + 2*(1-u)*u*cxp + u*u*452).toFixed(1));
+      el.linkDot.setAttribute('cy', ((1-u)*(1-u)*sy + 2*(1-u)*u*cyp + u*u*252).toFixed(1));
+      setA(el.linkDot, Math.sin(u*Math.PI));
+    } else setA(el.linkDot, 0);
+
+    /* radio waves at the dish mouth */
+    el.waves.forEach(function(w, k){
+      if(!w) return;
+      var u2 = (tt*.8 + k/3) % 1;
+      w.setAttribute('r', (7 + u2*30).toFixed(1));
+      setA(w, phase === 2 ? (1 - u2)*.65 : 0);
+    });
+
+    /* dish → server data flow */
+    if(el.link2){
+      if(!link2Len){ try{ link2Len = el.link2.getTotalLength(); }catch(e){ link2Len = 60; } }
+      var u3 = (tt*.5) % 1;
+      try{
+        var pt = el.link2.getPointAtLength(u3*link2Len);
+        el.flowDot.setAttribute('cx', pt.x.toFixed(1));
+        el.flowDot.setAttribute('cy', pt.y.toFixed(1));
+      }catch(e){}
+      setA(el.flowDot, phase >= 2 ? .9 : 0);
+    }
+
+    /* server LEDs */
+    setA(el.led1, .35 + .65*Math.abs(Math.sin(tt*3.2)));
+    setA(el.led2, .35 + .65*Math.abs(Math.sin(tt*4.1 + 1)));
+    setA(el.led3, .35 + .65*Math.abs(Math.sin(tt*2.6 + 2)));
+
+    /* bridge pulse between panels */
+    if(el.bridgeDot){
+      var u4 = (tt*.7) % 1;
+      el.bridgeDot.setAttribute('cx', (594 + u4*12).toFixed(1));
+      setA(el.bridgeDot, Math.sin(u4*Math.PI));
+    }
+
+    /* reception buffer (phases 1-2) */
+    var buf = phase === 2 ? p : (phase === 1 ? p*.12 : 1);
+    if(el.buffer) el.buffer.setAttribute('width', (216*buf).toFixed(1));
+    if(el.bufferTxt) el.bufferTxt.textContent = Math.round(buf*100) + ' %';
+
+    /* pixelisation */
+    if(phase === 3){
+      setA(el.grid, 1);
+      for(var i = 0; i < cells.length; i++){
+        var a = clamp01((p - (i/cells.length)*.5)/.22);
+        cells[i].setAttribute('opacity', a.toFixed(3));
+      }
+    } else if(phase === 4){
+      setA(el.grid, Math.max(0, 1 - p*3));
+    } else {
+      setA(el.grid, 0);
+    }
+
+    /* 3×3 kernel sweep */
+    if(phase === 3){
+      var kx = GX + ((p*1.0) % 1) * (COLS - 3) * CELL;
+      var ky = GY + (Math.floor(p*3) % 2 === 0 ? 1 : 3) * CELL;
+      el.kernel.setAttribute('transform', 'translate(' + kx.toFixed(1) + ',' + ky.toFixed(1) + ')');
+      setA(el.kernel, 1);
+    } else setA(el.kernel, 0);
+
+    /* numeric matrix */
+    setA(el.matrix, phase === 3 ? 1 : phase === 4 ? .16 : 0);
+    if(phase === 3){
+      var tick = Math.floor(tt*5);
+      if(tick !== lastTick){
+        lastTick = tick;
+        for(var n = 0; n < numEls.length; n++){
+          numEls[n].textContent = (((n*37 + tick*29) % 256)/255).toFixed(2);
+        }
+      }
+    }
+
+    /* vector output */
+    var va = phase === 4 ? ease(p*3) : 0;
+    setA(el.vector, va);
+    if(phase === 4){
+      var sc = .965 + .035*ease(p*2.5);
+      el.vector.setAttribute('transform',
+        'translate(782 212) scale(' + sc.toFixed(3) + ') translate(-782 -212)');
+    }
+
+    /* stats + contextual label */
+    setA(el.stats, phase === 4 ? ease((p - .3)/.5) : 0);
+    if(el.rightLabel){
+      el.rightLabel.textContent = phase === 4 ? 'SEGMENTATION · CARTE VECTORIELLE'
+        : phase === 3 ? 'PIXELLISATION · MATRICE CNN'
+        : 'FLUX ENTRANT · VISION PAR ORDINATEUR';
+    }
+    setA(el.idle, phase <= 2 ? (phase === 2 ? 1 : .9) : 0);
+
+    requestAnimationFrame(frame);
+  }
+
+  updatePlay();
+  requestAnimationFrame(frame);
+})();
+</script>
+<script type="module">
+/* ==========================================================
+   SINGLE 3D EARTH — one globe, one orbiting satellite
+   ========================================================== */
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const canvas = document.getElementById('globe');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+} catch (e) {
+  canvas.style.display = 'none';
+  throw e;
+}
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+const scene = new THREE.Scene();
+/* studio-like environment so metallic parts read as real metal */
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 120);
+camera.position.set(0, 0, 9.4);
+
+const root  = new THREE.Group(); scene.add(root);   // whole system (position/scale on resize)
+const earthG = new THREE.Group(); root.add(earthG); // spinning earth + its nodes/arcs
+const R = 2.0;
+
+/* ---------------- lights ---------------- */
+scene.add(new THREE.AmbientLight(0x9db8d8, 0.55));
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(-3.2, 1.8, 7.5); scene.add(sun);
+const rim = new THREE.DirectionalLight(0x66d9ff, 0.75);
+rim.position.set(6.5, -2.5, -4); scene.add(rim);
+
+/* ---------------- texture helpers ---------------- */
+const tl = new THREE.TextureLoader();
+tl.setCrossOrigin('anonymous');
+function loadChain(urls, done, i){
+  i = i || 0;
+  if(i >= urls.length){ done(null); return; }
+  tl.load(urls[i], function(t){ done(t); }, undefined, function(){ loadChain(urls, done, i+1); });
+}
+const JS = 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r160/examples/textures/planets/';
+const RAW = 'https://raw.githubusercontent.com/mrdoob/three.js/r160/examples/textures/planets/';
+const URLS = {
+  earth:   [JS+'earth_atmos_2048.jpg', RAW+'earth_atmos_2048.jpg'],
+  spec:    [JS+'earth_specular_2048.jpg', RAW+'earth_specular_2048.jpg'],
+  lights:  [JS+'earth_lights_2048.png', RAW+'earth_lights_2048.png']
+};
+function proceduralEarth(){
+  const c = document.createElement('canvas'); c.width = 1024; c.height = 512;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0,0,0,512);
+  g.addColorStop(0,'#0a2f52'); g.addColorStop(.5,'#0d4f7a'); g.addColorStop(1,'#0a2f52');
+  x.fillStyle = g; x.fillRect(0,0,1024,512);
+  let s = 42; const rnd = () => { s = (s*16807) % 2147483647; return s/2147483647; };
+  for(let i=0;i<90;i++){
+    const cx = rnd()*1024, cy = 70 + rnd()*372, w = 20+rnd()*90, h = 12+rnd()*55;
+    x.fillStyle = i%3 ? 'rgba(58,110,74,.85)' : 'rgba(126,134,84,.8)';
+    x.beginPath(); x.ellipse(cx, cy, w, h, rnd()*3, 0, 6.283); x.fill();
+  }
+  x.fillStyle = 'rgba(240,248,255,.92)';
+  x.fillRect(0,0,1024,24); x.fillRect(0,488,1024,24);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+function srgb(t){ if(t){ t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy(); } return t; }
+
+/* ---------------- earth ---------------- */
+const earthMat = new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 16, specular: 0x335577 });
+loadChain(URLS.earth, function(t){
+  if(t){ earthMat.map = srgb(t); }
+  else { earthMat.map = proceduralEarth(); }
+  earthMat.needsUpdate = true;
+});
+loadChain(URLS.spec, function(t){ if(t){ earthMat.specularMap = t; earthMat.needsUpdate = true; } });
+loadChain(URLS.lights, function(t){
+  if(t){ earthMat.emissiveMap = t; earthMat.emissive = new THREE.Color(0x6688aa); earthMat.emissiveIntensity = .42; earthMat.needsUpdate = true; }
+});
+const earth = new THREE.Mesh(new THREE.SphereGeometry(R, 64, 48), earthMat);
+earthG.add(earth);
+
+/* atmosphere rim glow */
+const atmo = new THREE.Mesh(
+  new THREE.SphereGeometry(R*1.05, 48, 32),
+  new THREE.ShaderMaterial({
+    vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix*normal); gl_Position = projectionMatrix*modelViewMatrix*vec4(position,1.0); }',
+    fragmentShader: 'varying vec3 vN; void main(){ float i = pow(0.7 - dot(vN, vec3(0.,0.,1.)), 2.6); gl_FragColor = vec4(0.25,0.72,1.0,1.0)*i; }',
+    blending: THREE.AdditiveBlending, side: THREE.BackSide, transparent: true, depthWrite: false
+  })
+);
+earthG.add(atmo);
+
+/* ---------------- helpers ---------------- */
+function radialTex(inner){
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const g = x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0, inner); g.addColorStop(.35, inner.replace(/[\d.]+\)$/,'0.5)'));
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = g; x.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+}
+function ll2v(lat, lon, r){
+  const th = (90-lat)*Math.PI/180, ph = (lon+180)*Math.PI/180;
+  return new THREE.Vector3(-r*Math.cos(ph)*Math.sin(th), r*Math.cos(th), r*Math.sin(ph)*Math.sin(th));
+}
+function addSpriteMat(tex, color, opacity){
+  return new THREE.SpriteMaterial({ map: tex, color: color, transparent: true, opacity: opacity,
+    blending: THREE.AdditiveBlending, depthWrite: false });
+}
+const pulseTex = radialTex('rgba(140,235,255,1)');
+const warmTex  = radialTex('rgba(255,190,110,1)');
+
+/* ---------------- coordinate nodes + urban pulses ---------------- */
+const cities = [
+  [36.27,3.35],[36.75,3.06],[48.85,2.35],[40.71,-74.0],[35.68,139.69],
+  [-23.55,-46.63],[30.04,31.24],[-1.29,36.82],[39.90,116.40],[-33.87,151.21],
+  [55.75,37.62],[34.05,-118.24],[28.61,77.21],[-34.60,-58.38]
+];
+const nodePulses = [];
+cities.forEach(function(c, i){
+  const p = ll2v(c[0], c[1], R*1.004);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0x9be8ff }));
+  dot.position.copy(p); earthG.add(dot);
+  const sp = new THREE.Sprite(addSpriteMat(pulseTex, 0x66d9ff, .8));
+  sp.position.copy(p.clone().multiplyScalar(1.01));
+  earthG.add(sp);
+  nodePulses.push({ sp: sp, ph: i*0.17, base: 0.14, warm: false });
+});
+/* warm urban pulse dots */
+for(let i=0;i<16;i++){
+  const lat = -55 + Math.random()*110, lon = -170 + Math.random()*340;
+  const p = ll2v(lat, lon, R*1.003);
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(0.015, 8, 8),
+    new THREE.MeshBasicMaterial({ color: 0xffc37a }));
+  dot.position.copy(p); earthG.add(dot);
+  const sp = new THREE.Sprite(addSpriteMat(warmTex, 0xffb454, .55));
+  sp.position.copy(p.clone().multiplyScalar(1.008));
+  earthG.add(sp);
+  nodePulses.push({ sp: sp, ph: Math.random(), base: 0.08, warm: true });
+}
+/* Médéa label */
+(function(){
+  const c = document.createElement('canvas'); c.width = 320; c.height = 80;
+  const x = c.getContext('2d');
+  x.font = '600 34px "IBM Plex Mono", monospace';
+  x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.fillStyle = 'rgba(255,255,255,.95)';
+  x.shadowColor = 'rgba(0,60,90,.9)'; x.shadowBlur = 8;
+  x.fillText('MÉDÉA', 160, 40);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false }));
+  s.scale.set(0.86, 0.215, 1);
+  s.position.copy(ll2v(36.27, 3.35, R*1.14));
+  earthG.add(s);
+})();
+
+/* ---------------- arcs between nodes ---------------- */
+const arcRuns = [];
+[[0,1],[1,2],[2,3],[3,4],[0,6],[4,9]].forEach(function(pair, k){
+  const a = ll2v(cities[pair[0]][0], cities[pair[0]][1], R);
+  const b = ll2v(cities[pair[1]][0], cities[pair[1]][1], R);
+  const d = a.distanceTo(b);
+  const mid = a.clone().add(b).multiplyScalar(.5).normalize().multiplyScalar(R + d*0.34 + 0.1);
+  const curve = new THREE.QuadraticBezierCurve3(a, mid, b);
+  const geo = new THREE.TubeGeometry(curve, 40, 0.0075, 6, false);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: .5,
+    blending: THREE.AdditiveBlending, depthWrite: false });
+  earthG.add(new THREE.Mesh(geo, mat));
+  const p = new THREE.Sprite(addSpriteMat(pulseTex, 0x7ce7ff, .9));
+  p.scale.setScalar(0.11);
+  earthG.add(p);
+  arcRuns.push({ curve: curve, sp: p, off: k/6, sp2: 0.10 + k*0.02 });
+});
+
+/* ---------------- orbit system ---------------- */
+const orbit = new THREE.Group();
+orbit.rotation.z = THREE.MathUtils.degToRad(22);
+orbit.rotation.x = THREE.MathUtils.degToRad(14);
+root.add(orbit);
+const ORB_R = 2.7;
+
+function ringMesh(r, tube, color, op){
+  const m = new THREE.Mesh(new THREE.TorusGeometry(r, tube, 6, 260),
+    new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: op,
+      blending: THREE.AdditiveBlending, depthWrite: false }));
+  m.rotation.x = Math.PI/2;
+  return m;
+}
+const ringMain = ringMesh(ORB_R, 0.007, 0x2563eb, .8); orbit.add(ringMain);
+const ringB = ringMesh(ORB_R*1.17, 0.005, 0x006699, .42);
+ringB.rotation.x = Math.PI/2 + 0.13; ringB.rotation.y = 0.09; orbit.add(ringB);
+
+/* ---------------- satellite ---------------- */
+const sat = new THREE.Group(); orbit.add(sat);
+
+const metal = new THREE.MeshStandardMaterial({ color: 0xd3d9df, metalness: .92, roughness: .3 });
+const gold  = new THREE.MeshStandardMaterial({ color: 0xd9a521, metalness: .88, roughness: .38 });
+const gold2 = new THREE.MeshStandardMaterial({ color: 0xe7b23c, metalness: .9,  roughness: .3 });
+
+sat.add(new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.2, 0.34), metal));
+const band = new THREE.Mesh(new THREE.BoxGeometry(0.268, 0.085, 0.348), gold);
+band.position.y = -0.05; sat.add(band);
+
+/* solar panels: blue cells + gold frames, along ±X */
+function cellTexture(){
+  const c = document.createElement('canvas'); c.width = 256; c.height = 128;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0,0,256,128);
+  g.addColorStop(0,'#123570'); g.addColorStop(.5,'#1d4ed8'); g.addColorStop(1,'#123570');
+  x.fillStyle = g; x.fillRect(0,0,256,128);
+  x.strokeStyle = 'rgba(255,255,255,.22)'; x.lineWidth = 2;
+  for(let i=32;i<256;i+=32){ x.beginPath(); x.moveTo(i,0); x.lineTo(i,128); x.stroke(); }
+  x.beginPath(); x.moveTo(0,64); x.lineTo(256,64); x.stroke();
+  x.strokeStyle = 'rgba(255,255,255,.4)'; x.strokeRect(2,2,252,124);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+const panelMat = new THREE.MeshStandardMaterial({
+  map: cellTexture(), color: 0xffffff, metalness: .5, roughness: .38,
+  emissive: 0x0b2a66, emissiveIntensity: .35, side: THREE.DoubleSide
+});
+const frameMat = gold;
+[1,-1].forEach(function(side){
+  const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.17, 8), metal);
+  boom.rotation.z = Math.PI/2; boom.position.x = side*0.165; sat.add(boom);
+  const frame = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.007, 0.31), frameMat);
+  frame.position.set(side*0.52, -0.011, 0); sat.add(frame);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(0.64, 0.013, 0.27), panelMat);
+  panel.position.set(side*0.52, 0, 0); sat.add(panel);
+});
+
+/* parabolic dish on the earth-facing (-Z) side */
+const dish = new THREE.Mesh(
+  new THREE.SphereGeometry(0.15, 28, 14, 0, Math.PI*2, 0, Math.PI*0.45),
+  new THREE.MeshStandardMaterial({ color: 0xe7b23c, metalness: .9, roughness: .32, side: THREE.DoubleSide })
+);
+dish.rotation.x = Math.PI/2; dish.position.z = -0.2; sat.add(dish);
+const feed = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.14, 8), gold2);
+feed.rotation.x = Math.PI/2; feed.position.z = -0.28; sat.add(feed);
+const feedTip = new THREE.Mesh(new THREE.SphereGeometry(0.02, 10, 10), gold2);
+feedTip.position.z = -0.35; sat.add(feedTip);
+
+/* earth-pointing sensor */
+const sensor = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.07),
+  new THREE.MeshStandardMaterial({ color: 0x27343f, metalness: .7, roughness: .5 }));
+sensor.position.set(0, 0.13, -0.16); sat.add(sensor);
+const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.02, 16),
+  new THREE.MeshStandardMaterial({ color: 0x0a2f4a, emissive: 0x35c8ff, emissiveIntensity: .9, metalness: .4, roughness: .25 }));
+lens.rotation.x = Math.PI/2; lens.position.set(0, 0.13, -0.2); sat.add(lens);
+/* whip antenna */
+const whip = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.2, 6), gold2);
+whip.position.set(-0.08, 0.19, 0.1); whip.rotation.z = 0.35; sat.add(whip);
+
+/* scan beam (satellite → earth surface) */
+const beam = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.05, 0.3, 1, 20, 1, true),
+  new THREE.MeshBasicMaterial({ color: 0x4fd0ff, transparent: true, opacity: .09,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide })
+);
+orbit.add(beam);
+const hitRing = new THREE.Mesh(new THREE.RingGeometry(0.1, 0.135, 40),
+  new THREE.MeshBasicMaterial({ color: 0x7ce7ff, transparent: true, opacity: .6,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+orbit.add(hitRing);
+const hitGlow = new THREE.Sprite(addSpriteMat(pulseTex, 0x7ce7ff, .7));
+orbit.add(hitGlow);
+
+/* scanning data pulses trailing on the orbit */
+const orbitPulses = [];
+for(let i=0;i<4;i++){
+  const p = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 10),
+    new THREE.MeshBasicMaterial({ color: 0x7ce7ff, transparent: true, opacity: .85,
+      blending: THREE.AdditiveBlending, depthWrite: false }));
+  orbit.add(p);
+  orbitPulses.push(p);
+}
+
+/* ---------------- layout / resize ---------------- */
+const pTarget = { x: 0, y: 0 }, pCur = { x: 0, y: 0 };
+addEventListener('mousemove', function(e){
+  pTarget.x = (e.clientX/innerWidth - .5);
+  pTarget.y = (e.clientY/innerHeight - .5);
+}, { passive: true });
+
+function resize(){
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w/h; camera.updateProjectionMatrix();
+  const halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov/2)) * camera.position.z * camera.aspect;
+  /* keep the globe's left edge at ~60% of the screen so text never sits on it */
+  const s = Math.max(0.4, Math.min(1, (halfW*0.385)/R));
+  root.scale.setScalar(s);
+  root.position.x = Math.min(3.4, 0.20*halfW + R*s);
+  root.position.y = h < 760 ? -0.12 : 0;
+}
+addEventListener('resize', resize);
+resize();
+
+/* ---------------- animation loop ---------------- */
+const clock = new THREE.Clock();
+let ang = 0.7;
+const V = new THREE.Vector3(), UP = new THREE.Vector3(0,1,0), tmp = new THREE.Vector3();
+
+function tick(){
+  const dt = Math.min(clock.getDelta(), 0.05);
+  const t = clock.elapsedTime;
+
+  pCur.x += (pTarget.x - pCur.x) * 0.05;
+  pCur.y += (pTarget.y - pCur.y) * 0.05;
+  root.rotation.y = pCur.x * 0.16;
+  root.rotation.x = -0.08 + pCur.y * 0.14;
+  earthG.rotation.y += dt * 0.05;           /* subtle spin */
+
+  /* node pulses */
+  for(let i=0;i<nodePulses.length;i++){
+    const n = nodePulses[i];
+    const ph = (t*(n.warm ? 0.55 : 0.38) + n.ph) % 1;
+    const sc = n.base * (0.7 + ph*2.4);
+    n.sp.scale.setScalar(sc);
+    n.sp.material.opacity = (n.warm ? 0.5 : 0.8) * (1 - ph);
+  }
+  /* arc travellers */
+  for(let i=0;i<arcRuns.length;i++){
+    const a = arcRuns[i];
+    a.sp.position.copy(a.curve.getPoint((t*a.sp2 + a.off) % 1));
+    a.sp.material.opacity = .55 + .35*Math.sin(t*2 + i);
+  }
+
+  /* satellite */
+  ang += dt * 0.2;
+  sat.position.set(Math.cos(ang)*ORB_R, 0, Math.sin(ang)*ORB_R);
+  root.getWorldPosition(V);
+  sat.lookAt(V);
+
+  /* scan beam toward earth surface */
+  const dist = sat.position.length();
+  const dir = tmp.copy(sat.position).normalize();          /* local: sat → out */
+  const start = R*0.99, end = dist - 0.16, len = Math.max(0.05, end - start);
+  beam.scale.set(1, len, 1);
+  beam.position.copy(dir).multiplyScalar(start + len/2);
+  beam.quaternion.setFromUnitVectors(UP, dir);
+  beam.material.opacity = 0.055 + 0.055*(0.5 + 0.5*Math.sin(t*2.1));
+
+  hitRing.position.copy(dir).multiplyScalar(R*1.006);
+  hitRing.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1), dir);
+  const rp = (t*0.9) % 1;
+  hitRing.scale.setScalar(0.6 + rp*1.7);
+  hitRing.material.opacity = 0.55*(1-rp);
+  hitGlow.position.copy(dir).multiplyScalar(R*1.01);
+  hitGlow.scale.setScalar(0.34 + 0.1*Math.sin(t*3));
+  hitGlow.material.opacity = 0.5 + 0.3*Math.sin(t*2.1);
+
+  /* orbit data pulses */
+  for(let i=0;i<orbitPulses.length;i++){
+    const a = ang - 0.42 - i*0.34;
+    const p = orbitPulses[i];
+    p.position.set(Math.cos(a)*ORB_R, 0, Math.sin(a)*ORB_R);
+    const s = 0.7 + 0.45*Math.sin(t*4 + i);
+    p.scale.setScalar(s);
+    p.material.opacity = 0.85 * (1 - i*0.2);
+  }
+  ringMain.material.opacity = 0.65 + 0.2*Math.sin(t*1.4);
+
+  /* render only while the cover slide owns the globe */
+  if(document.body.classList.contains('on-cover')) renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
