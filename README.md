@@ -1,2 +1,0 @@
-# GEOAI
-sig et geoai 

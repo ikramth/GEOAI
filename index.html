@@ -66,9 +66,9 @@
   }
   /* faint artistic flat world map (local asset) — left / centre biased */
   .bg-map{ position:absolute; inset:0;
-    background-image:url('ai-generated-great-detailed-illustration-of-the-world-map-in-vintage-style-ai-generated-free-photo.jpg');
+    background-image:url('public/world-map.jpg');
     background-size:cover; background-position:34% center;
-    opacity:.075; mix-blend-mode:multiply;
+    opacity:.28; mix-blend-mode:multiply;
     filter:saturate(.3) sepia(.35) contrast(.88);
     mask-image:radial-gradient(120% 100% at 30% 50%, #000 25%, rgba(0,0,0,.35) 70%, transparent 100%);
     -webkit-mask-image:radial-gradient(120% 100% at 30% 50%, #000 25%, rgba(0,0,0,.35) 70%, transparent 100%);
@@ -86,9 +86,10 @@
   }
   /* neural network mesh canvas (left & centre) */
   #neural{ position:fixed; inset:0; z-index:1; pointer-events:none; }
-  /* single 3D earth — COVER SLIDE ONLY */
-  #globe{ position:fixed; inset:0; width:100%; height:100%; z-index:2; pointer-events:none;
+  /* single 3D earth — COVER SLIDE ONLY (background layer) */
+  #globe{ position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; opacity:1;
     transition:opacity .6s var(--ease), visibility 0s linear .6s; }
+  #deck{ z-index:2; }
   @media (max-width:1199px){ #globe{ opacity:.72; } }
   @media (max-width:768px){ #globe{ opacity:.45; } }
   body:not(.on-cover) #globe{ opacity:0 !important; visibility:hidden !important; }
@@ -154,20 +155,20 @@
     transition:opacity .55s var(--ease) .08s, transform .9s var(--ease) .05s, visibility 0s; }
   /* STRICT 100vh — never scrolls; content is auto-scaled to fit (.fit) */
   .slide-inner{
-    height:100%; max-width:1340px; margin:0 auto; overflow:hidden;
+    position:relative; z-index:2; height:100%; max-width:1560px; margin:0 auto; overflow:hidden;
     display:flex; flex-direction:column; justify-content:center;
-    padding:clamp(4.3rem,8vh,5.6rem) clamp(1.1rem,3.4vw,2.8rem) clamp(4.6rem,9.5vh,6rem);
+    padding:clamp(4.3rem,8vh,5.6rem) clamp(1.25rem,2vw,2rem) clamp(4.6rem,9.5vh,6rem);
   }
   .fit{ width:100%; transform-origin:center center; }
   .rv{ opacity:0; transform:translateY(20px);
     transition:opacity .7s var(--ease) var(--d,0s), transform .7s var(--ease) var(--d,0s); }
   .slide.active .rv{ opacity:1; transform:none; }
   .h2{ font-family:'Sora',sans-serif; font-weight:700; color:var(--navy);
-    font-size:clamp(1.45rem,2.7vw,2.35rem); line-height:1.1; letter-spacing:-.02em; }
-  .lead{ font-size:clamp(.88rem,1vw,1rem); line-height:1.6; color:#475569; max-width:74ch; }
-  .ttl{ font-family:'Sora',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(.98rem,1.3vw,1.12rem);
+    font-size:clamp(1.7rem,3vw,2.7rem); line-height:1.1; letter-spacing:-.02em; }
+  .lead{ font-size:clamp(1rem,1.2vw,1.2rem); line-height:1.6; color:#475569; max-width:74ch; }
+  .ttl{ font-family:'Sora',sans-serif; font-weight:700; color:var(--navy); font-size:clamp(1.1rem,1.5vw,1.35rem);
     line-height:1.25; letter-spacing:-.01em; }
-  .bd{ font-size:clamp(11.6px,.85vw,13px); line-height:1.55; color:#475569; }
+  .bd{ font-size:clamp(16px,.9vw,18px); line-height:1.55; color:#475569; }
   .lbl{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; letter-spacing:.16em;
     text-transform:uppercase; color:var(--cy); }
   .ico-sq{ display:grid; place-items:center; width:38px; height:38px; border-radius:11px;
@@ -303,27 +304,28 @@
   .fiche-row{ border-left:2px solid rgba(0,102,153,.3); padding-left:.85rem; }
 
   /* ---------- slide 3 : animated video pipeline ---------- */
-  .pipe-card{ border-radius:20px; overflow:hidden; background:rgba(255,255,255,.88); }
+  .pipe-card{ border-radius:20px; overflow:visible; background:rgba(255,255,255,.88); max-width:100%; margin:0 auto; }
   .pipe-top{ display:flex; align-items:center; justify-content:space-between; gap:1rem;
-    padding:.55rem .85rem; border-bottom:1px solid var(--line); background:rgba(255,255,255,.55); }
+    padding:.75rem 1rem; border-bottom:1px solid var(--line); background:rgba(255,255,255,.55); }
   .pipe-live{ display:inline-flex; align-items:center; gap:.4rem; font-family:'IBM Plex Mono',monospace;
-    font-size:8.5px; letter-spacing:.16em; text-transform:uppercase; color:#b91c1c;
+    font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:#b91c1c;
     background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.24);
-    padding:.26rem .58rem; border-radius:999px; white-space:nowrap; }
+    padding:.3rem .62rem; border-radius:999px; white-space:nowrap; }
   .pipe-live i{ width:6px; height:6px; border-radius:99px; background:#ef4444; animation:livePulse 1.8s infinite; }
   @keyframes livePulse{ 0%{ box-shadow:0 0 0 0 rgba(239,68,68,.45) } 70%{ box-shadow:0 0 0 7px rgba(239,68,68,0) } 100%{ box-shadow:0 0 0 0 rgba(239,68,68,0) } }
-  .pipe-kicker{ font-family:'IBM Plex Mono',monospace; font-size:8.5px; letter-spacing:.13em;
-    text-transform:uppercase; color:var(--cy); line-height:1.3; }
-  .pipe-phase-title{ font-family:'Sora',sans-serif; font-weight:600; font-size:13px;
-    color:var(--navy); line-height:1.2; }
+  .pipe-kicker{ font-family:'IBM Plex Mono',monospace; font-size:1rem; letter-spacing:.13em;
+    text-transform:uppercase; color:var(--cy); line-height:1.3; font-weight:700; }
+  .pipe-phase-title{ font-family:'Sora',sans-serif; font-weight:700; font-size:1.25rem;
+    color:#0f172a; line-height:1.2; }
   .pipe-play{ display:inline-flex; align-items:center; gap:.42rem; font-family:'IBM Plex Mono',monospace;
     font-size:9.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--navy);
     background:#fff; border:1px solid var(--line); border-radius:999px; padding:.46rem .8rem;
     cursor:pointer; transition:all .3s var(--ease); flex:none; }
   .pipe-play:hover{ border-color:rgba(0,102,153,.45); transform:translateY(-2px); }
   .pipe-play svg{ width:13px; height:13px; display:block; }
-  .pipe-stage{ position:relative; background:#0B2545; aspect-ratio:1200/470; max-height:46vh;
-    display:flex; align-items:center; justify-content:center; overflow:hidden; }
+  .pipe-stage{ position:relative; background:#0B2545; aspect-ratio:1200/470; min-height:420px; max-height:56vh;
+    display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:1rem; }
+  .pipe-stage svg{ width:100%; max-width:100%; height:auto; transform:none; }
   .pipe-stage svg{ width:100%; height:100%; display:block; }
   .pipe-stage text{ font-family:'IBM Plex Mono',monospace; }
   .pipe-timeline{ display:grid; grid-template-columns:repeat(4,1fr); border-top:1px solid var(--line); }
@@ -347,6 +349,16 @@
     .pipe-top{ flex-wrap:wrap; }
   }
 
+  /* ---------- language switcher ---------- */
+  .lang-switch{ display:inline-flex; align-items:center; gap:2px; padding:3px; border-radius:999px;
+    background:rgba(255,255,255,.78); border:1px solid var(--line); }
+  .lang-btn{ font-family:'IBM Plex Mono',monospace; font-size:10px; letter-spacing:.08em;
+    padding:.3rem .62rem; border-radius:999px; border:0; background:transparent; color:var(--navy2);
+    cursor:pointer; transition:all .3s var(--ease); }
+  .lang-btn:hover{ background:rgba(0,102,153,.08); }
+  .lang-btn.on{ background:linear-gradient(120deg,#0B2545,#006699); color:#FBF9F5; }
+  html[dir="rtl"] body{ direction:rtl; }
+  html[dir="rtl"] .slide-inner, html[dir="rtl"] .fit{ text-align:right; }
   @media (prefers-reduced-motion:reduce){
     *{ animation-duration:.01ms !important; animation-iteration-count:1 !important;
        transition-duration:.14s !important; }
@@ -359,25 +371,7 @@
 <div id="bg" aria-hidden="true">
   <div class="bg-base"></div>
   <div class="bg-map"></div>
-  <svg class="bg-topo" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
-    <defs>
-      <path id="cA" fill="none" stroke="rgba(19,64,116,0.14)" stroke-width="1.1" vector-effect="non-scaling-stroke"
-            d="M-80,742 C120,690 268,764 424,712 C596,654 690,742 862,700 C1046,654 1184,724 1520,660" />
-      <path id="cB" fill="none" stroke="rgba(0,102,153,0.14)" stroke-width="1.1" vector-effect="non-scaling-stroke"
-            d="M-60,140 C110,96 236,188 402,140 C568,92 664,196 836,150 C1008,104 1148,206 1500,132" />
-      <path id="cC" fill="none" stroke="rgba(29,78,216,0.10)" stroke-width="1.1" vector-effect="non-scaling-stroke"
-            d="M560,980 C700,872 828,930 958,846 C1094,758 1224,806 1500,714" />
-    </defs>
-    <g class="topo-a">
-      <use href="#cA" y="0"/><use href="#cA" y="-30"/><use href="#cA" y="-60"/><use href="#cA" y="-90"/>
-      <use href="#cA" y="-120"/><use href="#cA" y="-150"/><use href="#cA" y="-180"/><use href="#cA" y="30"/>
-    </g>
-    <g class="topo-b">
-      <use href="#cB" y="0"/><use href="#cB" y="34"/><use href="#cB" y="68"/><use href="#cB" y="102"/>
-      <use href="#cB" y="136"/><use href="#cB" y="170"/>
-      <use href="#cC" y="0"/><use href="#cC" y="-38"/><use href="#cC" y="-76"/><use href="#cC" y="-114"/>
-    </g>
-  </svg>
+
   <div class="bg-glow" id="bgGlow"></div>
 </div>
 <canvas id="neural" aria-hidden="true"></canvas>
@@ -394,9 +388,14 @@
       </span>
     </button>
     <div class="flex items-center gap-3">
+      <div id="langSwitch" class="lang-switch" role="group" aria-label="Language switcher">
+        <button class="lang-btn on" data-lang="fr" type="button">FR</button>
+        <button class="lang-btn" data-lang="en" type="button">EN</button>
+      </div>
+      <button id="fsBtn" class="navbtn" type="button" aria-label="Plein écran" title="Plein écran (F)">⛶</button>
       <span class="hidden lg:inline font-mono2 text-[10px] uppercase tracking-[.2em] text-slate-500">Module GIS / SIG · CC · 2026–2027</span>
       <button id="counter" class="glass rounded-full px-3.5 py-2" aria-label="Sommaire des diapositives">
-        <b id="cCur" class="text-navy">01</b><span class="opacity-40"> / 11</span>
+        <b id="cCur" class="text-navy">01</b><span class="opacity-40"> / 13</span>
       </button>
     </div>
   </div>
@@ -407,26 +406,26 @@
 <main id="deck">
 <!-- ============ SLIDE 1 — COUVERTURE ============ -->
 <section class="slide" data-title="Couverture — GeoAI">
-  <div class="slide-inner">
-    <div class="fit grid md:grid-cols-12 gap-8 items-center">
-      <div class="md:col-span-7">
-        <span class="eyebrow rv" style="--d:.05s"><i data-lucide="sparkles"></i> Projet CC · Module GIS / SIG</span>
-        <h1 class="hero-title mt-4 rv" style="--d:.15s">GeoAI : <span class="grad">L'Intelligence Artificielle</span> au Service de l'Information Géospatiale</h1>
-        <p class="lead mt-4 rv" style="--d:.26s">Transformer la donnée satellite en connaissance spatiale — modèles de vision par ordinateur intégrés aux Systèmes d'Information Géographique.</p>
-        <div class="flex flex-wrap gap-2.5 mt-5 rv" style="--d:.36s">
-          <span class="badge"><i data-lucide="graduation-cap"></i> Master 1 · Smart Cities Engineering (Métiers de la Ville)</span>
-          <span class="badge"><i data-lucide="building-2"></i> Département d'Architecture</span>
-          <span class="badge"><i data-lucide="university"></i> Faculté de Technologie</span>
-          <span class="badge"><i data-lucide="map-pin"></i> Université Yahia Farès de Médéa · 2026-2027</span>
-          <span class="badge"><i data-lucide="user-check"></i> Encadrant : Dr. Amel KELLOU</span>
+  <div class="slide-inner" style="padding-top:3.5rem;">
+    <div class="fit" style="max-width:1360px; margin:0 auto; display:grid; grid-template-columns:1.35fr 0.85fr; align-items:center; gap:3rem; padding:0 3rem;">
+      <div style="text-align:center;">
+        <h1 class="hero-title rv" data-i18n="cover.title" style="--d:.15s; color:#0f172a; font-size:clamp(3rem,4.5vw,4.4rem); line-height:1.05; font-weight:800; letter-spacing:-.02em;">GeoAI</h1>
+        <p class="rv" data-i18n="cover.subtitle" style="--d:.22s; color:#1e293b; font-size:clamp(1.25rem,1.8vw,1.65rem); font-weight:600; max-width:34ch; margin:0.75rem auto 1.75rem; line-height:1.35;">L'Intelligence Artificielle au Service de l'Information Géospatiale</p>
+        <div class="flex flex-col gap-2 items-center rv" style="--d:.36s; color:#0f172a; font-size:1.05rem; font-weight:600;">
+          <div>Université Yahia Farès de Médéa — 2026–2027</div>
+          <div>Faculté de Technologie</div>
+          <div>Département d'Architecture</div>
+          <div>Encadrant : Dr. Amel Kellou</div>
+          <div style="display:flex; justify-content:center; gap:1.5rem; flex-wrap:wrap; margin-top:.5rem;">
+            <span>1. TAHRAOUI IKRAM</span>
+            <span>2. BENKORTBI OUSSAMA</span>
+          </div>
         </div>
-        <div class="flex flex-wrap gap-3 mt-5 rv" style="--d:.46s">
-          <button class="cta cta-primary" data-go="1">Commencer <i data-lucide="arrow-right"></i></button>
-          <button class="cta cta-ghost" data-index><i data-lucide="list"></i> Sommaire</button>
-        </div>
-        <p class="cap mt-5 rv" style="--d:.56s">Réalisé par <b class="text-navy">1. BENKORTBI OUSSAMA</b> &nbsp;·&nbsp; <b class="text-navy">2. TAHRAOUI IKRAM</b><br>Département d'Architecture · Faculté de Technologie · Université Yahia Farès de Médéa</p>
       </div>
-      <div class="hidden md:block md:col-span-5" aria-hidden="true"></div>
+      <div aria-hidden="true"></div>
+    </div>
+    <div style="position:absolute; left:50%; transform:translateX(-50%); bottom:5.5rem;">
+      <button class="cta cta-primary rv" data-go="1" data-i18n="nav.start" style="--d:.46s">Commencer <i data-lucide="arrow-right"></i></button>
     </div>
   </div>
 </section>
@@ -756,6 +755,32 @@
   </div>
 </section>
 
+<!-- ============ SLIDE 3b — APPLE : HOW AI READS LAYERS ============ -->
+<section class="slide" data-title="Apple — How AI Reads Layers">
+  <div class="slide-inner">
+    <div class="fit flex flex-col items-center justify-center gap-4">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="apple"></i> 03b · How AI reads layers</span>
+      <h2 class="h2 rv" style="--d:.12s">How AI reads layers and recognizes objects? <span class="grad">— green apple</span></h2>
+      <div class="w-full flex items-center justify-center rv" style="--d:.2s">
+        <img src="public/apple-layers.jpg" alt="Green apple AI layers" style="max-width:92%; max-height:62vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 48px -26px rgba(11,37,69,.4);">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SLIDE 3c — LAYERS (BANDS) ============ -->
+<section class="slide" data-title="Layers (Bands)">
+  <div class="slide-inner">
+    <div class="fit flex flex-col items-center justify-center gap-4">
+      <span class="eyebrow rv" style="--d:.05s"><i data-lucide="layers"></i> 03c · Layers (Bands)</span>
+      <h2 class="h2 rv" style="--d:.12s">Layers (Bands) <span class="grad">— satellite bands / NDVI</span></h2>
+      <div class="w-full flex items-center justify-center rv" style="--d:.2s">
+        <img src="public/geoai-bands.jpg" alt="Layers (Bands)" style="max-width:92%; max-height:62vh; width:auto; height:auto; object-fit:contain; border-radius:14px; box-shadow:0 20px 48px -26px rgba(11,37,69,.4);">
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ SLIDE 4 — RUPTURE ============ -->
 <section class="slide" data-title="Rupture Technologique — SIG vs GeoAI">
   <div class="slide-inner">
@@ -979,9 +1004,9 @@
             <span class="cap"><b id="cdDateA" class="text-navy">2019</b> ← glisser → <b class="text-cy">2026</b></span>
           </div>
           <div class="cd-stage mt-3 frame" id="cdStage">
-            <div class="cd-a" style="position:absolute;inset:0"><img src="cartographie_drone.jpg" alt="Imagerie aérienne de référence, 2019"></div>
+            <div class="cd-a" style="position:absolute;inset:0"><img src="public/cartographie_drone.jpg" alt="Imagerie aérienne de référence, 2019"></div>
             <div class="cd-b" id="cdOverlay">
-              <img src="cartographie_drone.jpg" alt="Imagerie aérienne détectée, 2026">
+              <img src="public/cartographie_drone.jpg" alt="Imagerie aérienne détectée, 2026">
               <svg viewBox="0 0 400 225" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M232,152 C262,122 312,130 342,152 C367,170 357,198 312,202 C262,207 222,187 232,152 Z" fill="rgba(0,153,204,.22)" stroke="#00A6D6" stroke-width="2"/>
                 <path d="M212,38 C252,28 302,50 312,84 C320,112 282,130 244,122 C206,114 187,68 212,38 Z" fill="rgba(29,78,216,.18)" stroke="#1D4ED8" stroke-width="2"/>
@@ -1099,8 +1124,8 @@
           <div class="sm:col-span-2 fiche-row">
             <span class="lbl">Réalisé par</span>
             <div class="flex flex-wrap gap-2 mt-1.5">
-              <span class="badge"><b class="font-mono2 text-cy">1.</b> BENKORTBI OUSSAMA <span class="font-ar opacity-60">بن قرطبي أسامة</span></span>
-              <span class="badge"><b class="font-mono2 text-cy">2.</b> TAHRAOUI IKRAM <span class="font-ar opacity-60">طهراوي إكرام</span></span>
+              <span class="badge"><b class="font-mono2 text-cy">1.</b> TAHRAOUI IKRAM <span class="font-ar opacity-60">طهراوي إكرام</span></span>
+              <span class="badge"><b class="font-mono2 text-cy">2.</b> BENKORTBI OUSSAMA <span class="font-ar opacity-60">بن قرطبي أسامة</span></span>
             </div>
           </div>
           <div class="fiche-row">
@@ -1152,7 +1177,7 @@
     <div class="flex items-center justify-between gap-4">
       <div>
         <span class="lbl">Navigation</span>
-        <h2 class="font-display font-bold text-navy text-lg mt-0.5">Sommaire — 11 diapositives</h2>
+        <h2 class="font-display font-bold text-navy text-lg mt-0.5">Sommaire — 13 diapositives</h2>
       </div>
       <button class="navbtn" id="idxClose" aria-label="Fermer le sommaire"><i data-lucide="x"></i></button>
     </div>
@@ -1354,7 +1379,7 @@
   wfSelect(0);
 
   function onSlideEnter(i){
-    if(i === 8) wfStart(); else wfStop();
+    if(i === 10) wfStart(); else wfStop();
     fitOne(slides[i]);
   }
 
@@ -1735,8 +1760,8 @@
       }
     }
 
-    /* vector output */
-    var va = phase === 4 ? ease(p*3) : 0;
+    /* vector output — Segmentation finale: rich, complete state */
+    var va = phase === 4 ? Math.max(0.45, ease(p*2)) : 0;
     setA(el.vector, va);
     if(phase === 4){
       var sc = .965 + .035*ease(p*2.5);
@@ -2133,6 +2158,108 @@ function tick(){
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
+</script>
+<script>
+/* ==========================================================
+   i18n — FR (default) / EN / AR
+   ========================================================== */
+window.TRANSLATIONS = {
+  fr: {
+    "cover.title": "GeoAI",
+    "cover.subtitle": "L'Intelligence Artificielle au Service de l'Information Géospatiale",
+    "nav.start": "Commencer"
+  },
+  en: {
+    "cover.title": "GeoAI",
+    "cover.subtitle": "Artificial Intelligence in the Service of Geospatial Information",
+    "nav.start": "Start"
+  },
+};
+
+window.I18N = {
+  fr: {},
+  en: {
+    "Commencer": "Start",
+    "Sommaire": "Table of contents",
+    "Université Yahia Farès de Médéa — 2026–2027": "University Yahia Farès of Médéa — 2026–2027",
+    "Faculté de Technologie": "Faculty of Technology",
+    "Département d'Architecture": "Department of Architecture",
+    "Encadrant : Dr. Amel Kellou": "Supervisor: Dr. Amel Kellou"
+  },
+};
+
+(function(){
+  var btns = document.querySelectorAll('#langSwitch .lang-btn');
+  var nodes = [];
+  function collect(root){
+    var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+    var n;
+    while(n = w.nextNode()){
+      if(n.nodeValue && n.nodeValue.trim().length > 1) nodes.push({node:n, orig:n.nodeValue});
+    }
+  }
+  function setLang(lang){
+    // data-i18n keyed elements
+    var dict = (window.TRANSLATIONS && window.TRANSLATIONS[lang]) || {};
+    document.querySelectorAll('[data-i18n]').forEach(function(el){
+      var key = el.getAttribute('data-i18n');
+      if(dict[key]) el.textContent = dict[key];
+    });
+    var fb = (window.I18N && window.I18N[lang]) || {};
+    nodes.forEach(function(o){
+      var t = o.orig.trim();
+      var lead = o.orig.match(/^\s*/)[0];
+      var trail = o.orig.match(/\s*$/)[0];
+      var tr = (lang === 'fr') ? t : (fb[t] || t);
+      o.node.nodeValue = lead + tr + trail;
+    });
+    document.documentElement.setAttribute('lang', lang);
+    document.documentElement.setAttribute('dir', 'ltr');
+    btns.forEach(function(b){ b.classList.toggle('on', b.dataset.lang === lang); });
+    try{ localStorage.setItem('geoai-lang', lang); }catch(e){}
+  }
+  btns.forEach(function(b){ b.addEventListener('click', function(){ setLang(b.dataset.lang); }); });
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', function(){ collect(document.body);
+      var saved = null; try{ saved = localStorage.getItem('geoai-lang'); }catch(e){}
+      setLang(saved === 'en' ? saved : 'fr');
+    });
+  } else {
+    collect(document.body);
+    var saved = null; try{ saved = localStorage.getItem('geoai-lang'); }catch(e){}
+    setLang(saved === 'en' ? saved : 'fr');
+  }
+  window.setLang = setLang;
+})();
+</script>
+<script>
+(function(){
+  var btn = document.getElementById('fsBtn');
+  function update(){
+    if(!btn) return;
+    btn.textContent = document.fullscreenElement ? '✕' : '⛶';
+  }
+  function toggle(){
+    if(!document.fullscreenElement){
+      var el = document.documentElement;
+      var r = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if(r) r.call(el);
+    } else {
+      var e = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+      if(e) e.call(document);
+    }
+  }
+  if(btn) btn.addEventListener('click', toggle);
+  document.addEventListener('fullscreenchange', update);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'f' || e.key === 'F'){
+      var tag = (e.target.tagName || '').toLowerCase();
+      if(tag === 'input' || tag === 'textarea') return;
+      e.preventDefault(); toggle();
+    }
+  });
+  update();
+})();
 </script>
 </body>
 </html>
